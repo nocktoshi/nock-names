@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { useRegistrationFlow } from "./use-registration-flow";
 
 const mockPostRegister = vi.fn();
-
 vi.mock("@/api", () => ({
   postRegister: (...args) => mockPostRegister(...args),
 }));
