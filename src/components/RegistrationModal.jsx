@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, Clock, Check, X } from "lucide-react";
+import { AlertTriangle, Clock, Check, X, Lock} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -28,19 +28,20 @@ export default function RegistrationModal({
   if (!domain) return null;
 
   const getStatusDisplay = () => {
-    if (!transactionStatus) return null;
+    if (!transactionStatus || transactionStatus === "idle") return null;
+    const baseStatus = {
+      icon: Clock,
+      color: "bg-yellow-500",
+      text: statusText,
+    };
 
     const statusConfig = {
-      pending: {
-        icon: Clock,
-        color: "bg-yellow-500",
-        text: statusText,
-      },
-      confirmed: {
-        icon: Check,
-        color: "bg-green-500",
-        text: statusText,
-      },
+      building: baseStatus,
+      requesting: baseStatus,
+      signing: { ...baseStatus, icon: Lock },
+      sending: baseStatus,
+      pending: { ...baseStatus, icon: AlertTriangle },
+      confirmed: { icon: Check, color: "bg-green-500", text: statusText },
       failed: { icon: X, color: "bg-red-500", text: statusText },
     };
 

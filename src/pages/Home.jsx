@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Zap, Search } from "lucide-react";
 import { Link } from "wouter";
 import DomainSearch from "@/components/DomainSearch";
@@ -13,10 +13,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NockchainProvider, wasm } from "@nockbox/iris-sdk";
 
-import { fetchSearchResults } from "@/api";
-import { getFee } from "@/common";
+import { fetchSearchResults, fetchSuggestions } from "@/api";
 
 export default function Home() {
+  const [provider, setProvider] = useState(null);
+  const [rpcClient, setRpcClient] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,13 +33,18 @@ export default function Home() {
   } = useRegistrationFlow({ provider, rpcClient, wasm });
   const [searchTerm, setSearchTerm] = useState("");
   const [connectedAccount, setConnectedAccount] = useState(null);
-  const [provider, setProvider] = useState(null);
-  const [rpcClient, setRpcClient] = useState(null);
+  const wasmInitRef = useRef(false);
 
   useEffect(() => {
     const initWalletAndWasm = async () => {
+      if (wasmInitRef.current) return; // avoid double init (React strict mode)
+      wasmInitRef.current = true;
       try {
-        await wasm.default(); // Initialize the WASM module
+        const wasmUrl = new URL(
+          "/iris_wasm_bg.wasm",
+          window.location.origin
+        ).toString();
+        await wasm.default(wasmUrl); // Initialize the WASM module with explicit URL
         const client = new wasm.GrpcClient("https://rpc.nockbox.org");
         setRpcClient(client);
 
@@ -54,50 +60,18 @@ export default function Home() {
     initWalletAndWasm();
   }, []);
 
-  // todo: remove mock functionality
-  const mockSuggestions = (originalDomain) => {
-    return [
-      {
-        name: `${originalDomain}app.nock`,
-        price: getFee(`${originalDomain}app`),
-        isAvailable: true,
-        owner: null,
-        registeredAt: null,
-        expiresAt: null,
-      },
-      {
-        name: `${originalDomain}2025.nock`,
-        price: getFee(`${originalDomain}2025`),
-        isAvailable: true,
-        owner: null,
-        registeredAt: null,
-        expiresAt: null,
-      },
-      {
-        name: `my${originalDomain}.nock`,
-        price: getFee(`my${originalDomain}`),
-        isAvailable: true,
-        owner: null,
-        registeredAt: null,
-        expiresAt: null,
-      },
-    ];
-  };
-
   const handleSearch = async (domain) => {
     setIsLoading(true);
     setSearchTerm(domain);
     console.log(`Searching for domain: ${domain}`);
 
-    fetchSearchResults(domain).then((data) => {
+    try {
+      const data = await fetchSearchResults(domain);
       if (data) {
         setSearchResults([data]);
-        // If the main domain is taken, show suggestions
         if (!data.isAvailable) {
-          const generatedSuggestions = mockSuggestions(
-            domain.replace(".nock", "")
-          );
-          setSuggestions(generatedSuggestions);
+          const suggs = await fetchSuggestions(domain);
+          setSuggestions(suggs || []);
         } else {
           setSuggestions([]);
         }
@@ -105,8 +79,13 @@ export default function Home() {
         setSearchResults([]);
         setSuggestions([]);
       }
+    } catch (error) {
+      console.error("Search failed", error);
+      setSearchResults([]);
+      setSuggestions([]);
+    } finally {
       setIsLoading(false);
-    });
+    }
   };
 
   const handleRegister = (domain) => {

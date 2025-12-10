@@ -6,112 +6,48 @@ import DomainDetails from "@/components/DomainDetails";
 import AddressPortfolio from "@/components/AddressPortfolio";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { fetchAddressPortfolio, fetchDomainDetails } from "@/api";
 
 export default function Lookup() {
   const [searchResults, setSearchResults] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // todo: remove mock functionality
-  const mockDomainLookup = (name) => {
-    const mockDomains = {
-      'johndoe': {
-        id: "lookup-1",
-        name: "johndoe",
-        price: "0.08",
-        isAvailable: false,
-        owner: "8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5",
-        registeredAt: new Date("2024-01-15T14:30:00Z"),
-        expiresAt: new Date("2026-01-15T14:30:00Z"),
-      },
-      'cryptogamer': {
-        id: "lookup-2", 
-        name: "cryptogamer",
-        price: "0.15",
-        isAvailable: false,
-        owner: "0x8ba1f109551bD432803012645Hac136c54c4e4cb",
-        registeredAt: new Date("2024-01-15T13:45:00Z"),
-        expiresAt: new Date("2026-01-15T13:45:00Z"),
-      },
-      'available': {
-        id: "lookup-3",
-        name: "available",
-        price: "0.1",
-        isAvailable: true,
-        owner: null,
-        registeredAt: null,
-        expiresAt: null,
-      }
-    };
-    
-    return mockDomains[name.toLowerCase()] || null;
-  };
-
-  // todo: remove mock functionality
-  const mockAddressLookup = (address) => {
-    const mockPortfolios = {
-      '8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5': [
-        {
-          id: "portfolio-1",
-          name: "johndoe",
-          price: "0.08",
-          isAvailable: false,
-          owner: "8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5",
-          registeredAt: new Date("2024-01-15T14:30:00Z"),
-          expiresAt: new Date("2026-01-15T14:30:00Z"),
-        },
-        {
-          id: "portfolio-2",
-          name: "myawesome",
-          price: "0.12",
-          isAvailable: false,
-          owner: "8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5",
-          registeredAt: new Date("2024-01-10T10:15:00Z"),
-          expiresAt: new Date("2026-01-10T10:15:00Z"),
-        }
-      ],
-      '0x8ba1f109551bD432803012645Hac136c54c4e4cb': [
-        {
-          id: "portfolio-3",
-          name: "cryptogamer",
-          price: "0.15",
-          isAvailable: false,
-          owner: "0x8ba1f109551bD432803012645Hac136c54c4e4cb",
-          registeredAt: new Date("2024-01-15T13:45:00Z"),
-          expiresAt: new Date("2026-01-15T13:45:00Z"),
-        }
-      ]
-    };
-    
-    return mockPortfolios[address] || [];
-  };
+  const [error, setError] = useState("");
 
   const handleSearch = async (query, type) => {
     setIsLoading(true);
+    setError("");
     console.log(`Looking up ${type}: ${query}`);
-    
-    // Simulate API call
-    setTimeout(() => {
-      if (type === 'domain') {
-        const domain = mockDomainLookup(query);
+
+    try {
+      if (type === "domain") {
+        const domain = await fetchDomainDetails(query);
         if (domain) {
-          setSearchResults({ type: 'domain', data: domain, query });
+          setSearchResults({ type: "domain", data: domain, query });
         } else {
-          setSearchResults({ type: 'domain', data: {
-            id: 'not-found',
-            name: query,
-            price: "0.1",
-            isAvailable: true,
-            owner: null,
-            registeredAt: null,
-            expiresAt: null,
-          }, query });
+          setSearchResults({
+            type: "domain",
+            data: {
+              id: "not-found",
+              name: query,
+              price: "0",
+              isAvailable: true,
+              owner: null,
+              registeredAt: null,
+              expiresAt: null,
+            },
+            query,
+          });
         }
       } else {
-        const domains = mockAddressLookup(query);
-        setSearchResults({ type: 'address', data: domains, query });
+        const domains = await fetchAddressPortfolio(query);
+        setSearchResults({ type: "address", data: domains, query });
       }
+    } catch (e) {
+      console.error("Lookup failed", e);
+      setError("Lookup failed. Please try again.");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleDomainRegister = (domain) => {
@@ -151,6 +87,11 @@ export default function Lookup() {
           </p>
           
           <LookupSearch onSearch={handleSearch} isLoading={isLoading} />
+          {error && (
+            <p className="text-sm text-destructive mt-3" role="alert">
+              {error}
+            </p>
+          )}
         </div>
       </section>
 

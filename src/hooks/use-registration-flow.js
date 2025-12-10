@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback } from "react";
 import { PAYMENT_ADDRESS, getFee } from "@/common";
 import { postRegister } from "@/api";
 
@@ -20,72 +20,47 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
   const [transactionHash, setTransactionHash] = useState();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const isMounted = useRef(true);
-  useEffect(() => {
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
-
-  const safeSet = (setter) => {
-    if (isMounted.current) setter();
-  };
-
   const reset = useCallback(() => {
-    safeSet(() => {
-      setStatus(STATUSES.idle);
-      setStatusText("");
-      setTransactionHash(undefined);
-      setIsProcessing(false);
-    });
+    setStatus(STATUSES.idle);
+    setStatusText("");
+    setTransactionHash(undefined);
+    setIsProcessing(false);
   }, []);
 
   const registerDomain = useCallback(
     async (name, address) => {
-      safeSet(() => {
-        setIsProcessing(true);
-        setStatus(STATUSES.validating);
-        setStatusText("Validating request...");
-        setTransactionHash(undefined);
-      });
+      setIsProcessing(true);
+      setStatus(STATUSES.validating);
+      setStatusText("Validating request...");
+      setTransactionHash(undefined);
 
       try {
         if (!name || !/^[a-z0-9]+\.nock$/.test(name)) {
-          safeSet(() => {
-            setStatus(STATUSES.failed);
-            setStatusText("Name must be alphanumeric lowercase and end with .nock");
-          });
+          setStatus(STATUSES.failed);
+          setStatusText("Name must be alphanumeric lowercase and end with .nock");
           return { ok: false };
         }
 
         if (!address) {
-          safeSet(() => {
-            setStatus(STATUSES.failed);
-            setStatusText("Please connect your wallet first");
-          });
+          setStatus(STATUSES.failed);
+          setStatusText("Please connect your wallet first");
           return { ok: false };
         }
 
         if (!provider) {
-          safeSet(() => {
-            setStatus(STATUSES.failed);
-            setStatusText("Wallet provider not ready");
-          });
+          setStatus(STATUSES.failed);
+          setStatusText("Wallet provider not ready");
           return { ok: false };
         }
 
         if (!rpcClient || !wasm) {
-          safeSet(() => {
-            setStatus(STATUSES.failed);
-            setStatusText("RPC client or WASM not initialized");
-          });
+          setStatus(STATUSES.failed);
+          setStatusText("RPC client or WASM not initialized");
           return { ok: false };
         }
 
-        safeSet(() => {
-          setStatus(STATUSES.requesting);
-          setStatusText("Creating registration request...");
-        });
+        setStatus(STATUSES.requesting);
+        setStatusText("Creating registration request...");
         const response = await postRegister(name, address);
         const key = response?.key ?? "";
         const [regStatus, responseName] = key.split(":");
@@ -96,10 +71,8 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
           // Fetch balance
           let balance;
           let spendCondition;
-          safeSet(() => {
-            setStatus(STATUSES.building);
-            setStatusText("Fetching wallet balance...");
-          });
+          setStatus(STATUSES.building);
+          setStatusText("Fetching wallet balance...");
           try {
             const pkh = wasm.Pkh.single(address);
             spendCondition = wasm.SpendCondition.newPkh(pkh);
@@ -107,17 +80,13 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
             balance = await rpcClient.getBalanceByFirstName(firstName.value);
 
             if (!balance?.notes?.length) {
-              safeSet(() => {
-                setStatus(STATUSES.failed);
-                setStatusText("No funds available in wallet");
-              });
+              setStatus(STATUSES.failed);
+              setStatusText("No funds available in wallet");
               return { ok: false };
             }
           } catch (err) {
-            safeSet(() => {
-              setStatus(STATUSES.failed);
-              setStatusText("Failed to fetch wallet balance");
-            });
+            setStatus(STATUSES.failed);
+            setStatusText("Failed to fetch wallet balance");
             return { ok: false, error: err };
           }
 
@@ -146,10 +115,8 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
           const txNotes = builder.allNotes();
 
           // Sign
-          safeSet(() => {
-            setStatus(STATUSES.signing);
-            setStatusText("Signing transaction...");
-          });
+          setStatus(STATUSES.signing);
+          setStatusText("Signing transaction...");
 
           const signedTxProtobuf = await provider.signRawTx({
             rawTx: rawTxProtobuf,
@@ -158,50 +125,43 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
           });
 
           // Send
-          safeSet(() => {
-            setStatus(STATUSES.sending);
-            setStatusText("Sending transaction...");
-          });
+          setStatus(STATUSES.sending);
+          setStatusText("Sending transaction...");
 
           const result = await rpcClient.sendTransaction(signedTxProtobuf);
+          if (!result) {
+            setStatus(STATUSES.failed);
+            setStatusText("Transaction send returned no result");
+            return { ok: false };
+          }
 
-          safeSet(() => {
-            setTransactionHash(nockchainTx.id.value);
-            setStatus(STATUSES.pending);
-            setStatusText(
-              `Transaction sent! Waiting for confirmation... TX: ${nockchainTx.id.value}`
-            );
-          });
+          setTransactionHash(nockchainTx.id.value);
+          setStatus(STATUSES.pending);
+          setStatusText(
+            `Transaction sent! Waiting for confirmation... TX: ${nockchainTx.id.value}`
+          );
 
           return { ok: true, hash: nockchainTx.id.value, result };
         }
 
         if (regStatus === "confirmed") {
-          safeSet(() => {
-            setStatus(STATUSES.confirmed);
-            setStatusText("Domain registered successfully!");
-          });
+          setStatus(STATUSES.confirmed);
+          setStatusText("Domain registered successfully!");
           return { ok: true };
         }
 
-        safeSet(() => {
-          setStatus(STATUSES.failed);
-          setStatusText("Registration failed");
-        });
+        setStatus(STATUSES.failed);
+        setStatusText("Registration failed");
         return { ok: false };
       } catch (error) {
-        safeSet(() => {
-          setStatus(STATUSES.failed);
-          setStatusText(
-            "Error during transaction: " +
-              (error?.response?.data?.error ?? error.message ?? String(error))
-          );
-        });
+        setStatus(STATUSES.failed);
+        setStatusText(
+          "Error during transaction: " +
+            (error?.response?.data?.error ?? error.message ?? String(error))
+        );
         return { ok: false, error };
       } finally {
-        safeSet(() => {
-          setIsProcessing(false);
-        });
+        setIsProcessing(false);
       }
     },
     [provider, rpcClient, wasm]

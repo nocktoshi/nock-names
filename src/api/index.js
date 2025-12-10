@@ -1,51 +1,169 @@
 import axios from "axios";
+import { getFee } from "@/common";
 
-const fetchPending = async () => {
-  try {
-    const response = await axios.get(`${import.meta.env.VITE_API_URL}/pending`);
-    return response.data || [];
-  } catch (error) {
-    console.error("Failed to fetch pending registrations:", error);
+const BASE_URL = import.meta.env.VITE_API_URL;
+
+const api = axios.create({
+  baseURL: BASE_URL,
+  timeout: 15_000,
+});
+
+const assertApiUrl = () => {
+  if (!BASE_URL) {
+    throw new Error("VITE_API_URL is not configured");
   }
 };
 
-const fetchVerified = async () => {
-  try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/verified`
-    );
-    return response.data || [];
-  } catch (error) {
-    console.error("Failed to fetch verified registrations:", error);
-  }
+const toIsoOrNull = (value) => {
+  if (value === null || value === undefined) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+};
+
+const toNumberOrNull = (value) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+const isString = (v) => typeof v === "string";
+const isBool = (v) => typeof v === "boolean";
+
+const validateDomain = (raw) => {
+  if (!raw || !isString(raw.name) || !isBool(raw.isAvailable)) return null;
+  const price = toNumberOrNull(raw.price);
+  if (price === null) return null;
+  return {
+    id: isString(raw.id) ? raw.id : undefined,
+    name: raw.name,
+    price,
+    isAvailable: raw.isAvailable,
+    owner: raw.owner === null || isString(raw.owner) ? raw.owner : null,
+    registeredAt: toIsoOrNull(raw.registeredAt),
+    expiresAt: toIsoOrNull(raw.expiresAt),
+  };
+};
+
+const validateRegistration = (raw) => {
+  if (!raw || !isString(raw.name)) return null;
+  return {
+    id: isString(raw.id) ? raw.id : undefined,
+    name: raw.name,
+    address: raw.address === null || isString(raw.address) ? raw.address : null,
+    timestamp: toIsoOrNull(raw.timestamp) ?? new Date().toISOString(),
+  };
+};
+
+const parseArray = (items, validator) => {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item) => validator(item))
+    .filter(Boolean);
 };
 
 export const fetchRecent = async () => {
-  const [pending, verified] = await Promise.all([
-    fetchPending(),
-    fetchVerified(),
-  ]);
-  return [...pending, ...verified];
+  assertApiUrl();
+  try {
+    const [pendingRes, verifiedRes] = await Promise.all([
+      api.get("/pending"),
+      api.get("/verified"),
+    ]);
+    const pending = parseArray(pendingRes.data, validateRegistration);
+    const verified = parseArray(verifiedRes.data, validateRegistration);
+    return [...pending, ...verified].map((item, idx) => ({
+      ...item,
+      id: item.id ?? `recent-${idx}-${item.name}`,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch recent registrations:", error);
+    return [];
+  }
 };
 
 export const fetchSearchResults = async (name) => {
+  assertApiUrl();
   try {
-    const response = await axios.get(
-      `${import.meta.env.VITE_API_URL}/search?name=${name.replace(".nock", "")}`
+    const trimmed = name.replace(".nock", "");
+    const response = await api.get(
+      `/search?name=${encodeURIComponent(trimmed)}`
     );
-    return response.data || [];
+    const parsed = validateDomain(response.data);
+    if (parsed) return parsed;
+    console.error("Invalid search response shape", response.data);
+    return null;
   } catch (error) {
     console.error("Failed to search registrations:", error);
+    return null;
+  }
+};
+
+export const fetchDomainDetails = async (name) => {
+  return fetchSearchResults(name);
+};
+
+export const fetchAddressPortfolio = async (address) => {
+  assertApiUrl();
+  try {
+    const response = await api.get(
+      `/verified?address=${encodeURIComponent(address)}`
+    );
+    const parsed = parseArray(response.data, validateDomain);
+    return parsed.map((d, idx) => ({
+      ...d,
+      id: d.id ?? `${address}-${idx}`,
+      isAvailable: false,
+    }));
+  } catch (error) {
+    console.error("Failed to fetch address portfolio:", error);
+    return [];
   }
 };
 
 export const postRegister = async (name, address) => {
-  const response = await axios.post(
-    `${import.meta.env.VITE_API_URL}/register`,
-    {
-      address,
-      name: name.toLowerCase(),
-    }
-  );
+  assertApiUrl();
+  const response = await api.post("/register", {
+    address,
+    name: name.toLowerCase(),
+  });
   return response.data || [];
+};
+
+export const fetchSuggestions = async (name) => {
+  assertApiUrl();
+  try {
+    const trimmed = name.replace(".nock", "");
+    const base = trimmed.toLowerCase();
+    // TODO: replace with real backend suggestion endpoint when available
+    return [
+      {
+        id: `suggest-app-${base}`,
+        name: `${base}app.nock`,
+        price: getFee(`${base}app`),
+        isAvailable: true,
+        owner: null,
+        registeredAt: null,
+        expiresAt: null,
+      },
+      {
+        id: `suggest-2026-${base}`,
+        name: `${base}2026.nock`,
+        price: getFee(`${base}2026`),
+        isAvailable: true,
+        owner: null,
+        registeredAt: null,
+        expiresAt: null,
+      },
+      {
+        id: `suggest-my-${base}`,
+        name: `my${base}.nock`,
+        price: getFee(`my${base}`),
+        isAvailable: true,
+        owner: null,
+        registeredAt: null,
+        expiresAt: null,
+      },
+    ];
+  } catch (error) {
+    console.error("Failed to fetch suggestions:", error);
+    return [];
+  }
 };
