@@ -1,0 +1,108 @@
+import { Check, X, Clock, ExternalLink } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+export default function DomainCard({
+  domain,
+  onRegister,
+  isRegistering = false,
+}) {
+
+  const getStatusBadge = () => {
+    if (domain.isAvailable) {
+      return (
+        <Badge
+          variant="default"
+          className="bg-chart-2 text-primary-foreground hover-elevate"
+        >
+          <Check className="h-3 w-3 mr-1" />
+          Available
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="destructive">
+        <X className="h-3 w-3 mr-1" />
+        Taken
+      </Badge>
+    );
+  };
+
+  return (
+    <Card
+      data-testid={`card-domain-${domain.name}`}
+      className="hover-elevate web3-glow-hover border-2 domain-card-premium"
+    >
+      <CardContent className="p-6">
+        <div className="items-center justify-between mb-4">
+          {getStatusBadge()}
+          <h3
+            className="text-lg font-mono font-semibold"
+            data-testid={`text-domain-name-${domain.name}`}
+          >
+            {domain.name}
+          </h3>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground">Price</span>
+            <span
+              className="font-semibold"
+              data-testid={`text-price-${domain.name}`}
+            >
+              {domain.price} NOCK
+            </span>
+          </div>
+
+          {!domain.isAvailable && domain.owner && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Owner</span>
+              <span
+                className="font-mono text-xs truncate max-w-32"
+                title={domain.owner}
+              >
+                {domain.owner.slice(0, 6)}...{domain.owner.slice(-4)}
+              </span>
+            </div>
+          )}
+
+          {domain.expiresAt && !domain.isAvailable && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Expires</span>
+              <span className="text-xs">
+                {new Date(domain.expiresAt).toLocaleDateString()}
+              </span>
+            </div>
+          )}
+        </div>
+      </CardContent>
+
+      <CardFooter className="p-6 pt-0">
+        {domain.isAvailable ? (
+          <Button
+            data-testid={`button-register-${domain.name}`}
+            className="w-full"
+            onClick={() => onRegister(domain)}
+            disabled={isRegistering}
+          >
+            {isRegistering ? (
+              <>
+                <Clock className="h-4 w-4 mr-2 animate-spin" />
+                Registering...
+              </>
+            ) : (
+              "Register Domain"
+            )}
+          </Button>
+        ) : (
+          <Button variant="outline" className="w-full" disabled>
+            <ExternalLink className="h-4 w-4 mr-2" />
+            View on Explorer
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
+  );
+}
