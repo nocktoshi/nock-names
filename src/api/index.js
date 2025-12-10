@@ -91,13 +91,21 @@ export const fetchAddressPortfolio = async (address) => {
   assertApiUrl();
   try {
     const response = await apiClient.get(
-      `/verified?address=${encodeURIComponent(address)}`
+      `/search?address=${encodeURIComponent(address)}`
     );
-    const parsed = parseArray(response.data, validateDomain);
-    return parsed.map((d, idx) => ({
-      ...d,
-      id: d.id ?? `${address}-${idx}`,
+    const { pending = [], verified = [] } = response.data || {};
+    const combined = [...pending, ...verified];
+    return combined.map((item, idx) => ({
+      id: item.txHash ?? `${address}-${idx}`,
+      name: item.name,
+      price: getFee(item.name),
       isAvailable: false,
+      owner: item.address,
+      registeredAt: item.timestamp
+        ? new Date(item.timestamp).toISOString()
+        : null,
+      expiresAt: null,
+      status: item.status ?? "registered",
     }));
   } catch (error) {
     console.error("Failed to fetch address portfolio:", error);

@@ -157,10 +157,27 @@ export default function DomainDetails({ domain }) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button variant="outline" className="gap-2">
-            <ExternalLink className="h-4 w-4" />
-            View on Explorer
-          </Button>
+          {domain.owner ? (
+            <Button
+              variant="outline"
+              className="gap-2"
+              asChild
+            >
+              <a
+                href={`https://nockblocks.com/address/${domain.owner}?tab=transactions`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View on Explorer
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" className="gap-2" disabled>
+              <ExternalLink className="h-4 w-4" />
+              View on Explorer
+            </Button>
+          )}
           {domain.owner && (
             <Button variant="outline" className="gap-2">
               <Clock className="h-4 w-4" />
