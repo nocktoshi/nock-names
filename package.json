@@ -7,10 +7,11 @@
     "dev": "vite",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "prebuild": "npm run lint",
     "build": "vite build",
-    "predeploy": "npm run build",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "deploy:preview": "npx wrangler versions upload"
   },
   "dependencies": {
     "@hookform/resolvers": "5.2.2",
