@@ -1,18 +1,5 @@
-import axios from "axios";
+import { apiClient, assertApiUrl } from "@/lib/api-client";
 import { getFee } from "@/common";
-
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-const api = axios.create({
-  baseURL: BASE_URL,
-  timeout: 15_000,
-});
-
-const assertApiUrl = () => {
-  if (!BASE_URL) {
-    throw new Error("VITE_API_URL is not configured");
-  }
-};
 
 const toIsoOrNull = (value) => {
   if (value === null || value === undefined) return null;
@@ -64,8 +51,8 @@ export const fetchRecent = async () => {
   assertApiUrl();
   try {
     const [pendingRes, verifiedRes] = await Promise.all([
-      api.get("/pending"),
-      api.get("/verified"),
+      apiClient.get("/pending"),
+      apiClient.get("/verified"),
     ]);
     const pending = parseArray(pendingRes.data, validateRegistration);
     const verified = parseArray(verifiedRes.data, validateRegistration);
@@ -83,7 +70,7 @@ export const fetchSearchResults = async (name) => {
   assertApiUrl();
   try {
     const trimmed = name.replace(".nock", "");
-    const response = await api.get(
+    const response = await apiClient.get(
       `/search?name=${encodeURIComponent(trimmed)}`
     );
     const parsed = validateDomain(response.data);
@@ -103,7 +90,7 @@ export const fetchDomainDetails = async (name) => {
 export const fetchAddressPortfolio = async (address) => {
   assertApiUrl();
   try {
-    const response = await api.get(
+    const response = await apiClient.get(
       `/verified?address=${encodeURIComponent(address)}`
     );
     const parsed = parseArray(response.data, validateDomain);
@@ -120,7 +107,7 @@ export const fetchAddressPortfolio = async (address) => {
 
 export const postRegister = async (name, address) => {
   assertApiUrl();
-  const response = await api.post("/register", {
+  const response = await apiClient.post("/register", {
     address,
     name: name.toLowerCase(),
   });

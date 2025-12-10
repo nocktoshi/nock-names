@@ -1,25 +1,17 @@
-import { useState, useEffect } from "react";
 import { Clock, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { fetchRecent } from "@/api";
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime'
-dayjs.extend(relativeTime)
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { useRecentRegistrations } from "@/hooks/use-queries";
 
 import { getFee } from "@/common";
 
-export default function RecentlyRegistered({ limit = 9 }) {
-  const [recentRegistrations, setRecentRegistrations] = useState([]);
+dayjs.extend(relativeTime);
 
-  useEffect(() => {
-    fetchRecent().then((data) => {
-      const sortedData = data.sort(
-        (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-      );
-      setRecentRegistrations(sortedData.slice(0, limit));
-    });
-  }, [limit]);
+export default function RecentlyRegistered({ limit = 9 }) {
+  const { data: recentRegistrations = [], isFetching } =
+    useRecentRegistrations(limit);
 
   return (
     <Card className="w-full max-w-6xl mx-auto">
@@ -40,6 +32,9 @@ export default function RecentlyRegistered({ limit = 9 }) {
       </CardHeader>
 
       <CardContent className="p-6 pt-0">
+        {isFetching && (
+          <p className="text-sm text-muted-foreground mb-4">Loading...</p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {recentRegistrations.map((registration) => (
             <Card

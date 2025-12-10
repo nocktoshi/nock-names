@@ -6,47 +6,21 @@ import DomainDetails from "@/components/DomainDetails";
 import AddressPortfolio from "@/components/AddressPortfolio";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fetchAddressPortfolio, fetchDomainDetails } from "@/api";
+import { useLookupQuery } from "@/hooks/use-queries";
 
 export default function Lookup() {
-  const [searchResults, setSearchResults] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [params, setParams] = useState({ query: null, type: "domain" });
   const [error, setError] = useState("");
+  const lookupQuery = useLookupQuery(params);
 
   const handleSearch = async (query, type) => {
-    setIsLoading(true);
     setError("");
     console.log(`Looking up ${type}: ${query}`);
-
     try {
-      if (type === "domain") {
-        const domain = await fetchDomainDetails(query);
-        if (domain) {
-          setSearchResults({ type: "domain", data: domain, query });
-        } else {
-          setSearchResults({
-            type: "domain",
-            data: {
-              id: "not-found",
-              name: query,
-              price: "0",
-              isAvailable: true,
-              owner: null,
-              registeredAt: null,
-              expiresAt: null,
-            },
-            query,
-          });
-        }
-      } else {
-        const domains = await fetchAddressPortfolio(query);
-        setSearchResults({ type: "address", data: domains, query });
-      }
+      setParams({ query, type });
     } catch (e) {
       console.error("Lookup failed", e);
       setError("Lookup failed. Please try again.");
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -86,7 +60,7 @@ export default function Lookup() {
             Search for detailed domain information by name or explore all domains owned by a wallet address
           </p>
           
-          <LookupSearch onSearch={handleSearch} isLoading={isLoading} />
+          <LookupSearch onSearch={handleSearch} isLoading={lookupQuery.isFetching} />
           {error && (
             <p className="text-sm text-destructive mt-3" role="alert">
               {error}
@@ -96,30 +70,30 @@ export default function Lookup() {
       </section>
 
       {/* Results Section */}
-      {searchResults && (
+      {lookupQuery.data && (
         <section className="py-8 px-4 no-default-hover-elevate">
           <div className="container mx-auto">
-            {searchResults.type === 'domain' ? (
+            {lookupQuery.data.type === 'domain' ? (
               <div className="space-y-4">
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-semibold mb-2">Domain Information</h3>
                   <p className="text-muted-foreground">
-                    Results for domain "<span className="font-mono">{searchResults.query}</span>"
+                    Results for domain "<span className="font-mono">{lookupQuery.data.query}</span>"
                   </p>
                 </div>
-                <DomainDetails domain={searchResults.data} />
+                <DomainDetails domain={lookupQuery.data.data} />
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-semibold mb-2">Address Portfolio</h3>
                   <p className="text-muted-foreground">
-                    Domains owned by "<span className="font-mono text-xs">{searchResults.query}</span>"
+                    Domains owned by "<span className="font-mono text-xs">{lookupQuery.data.query}</span>"
                   </p>
                 </div>
                 <AddressPortfolio 
-                  address={searchResults.query}
-                  domains={searchResults.data}
+                  address={lookupQuery.data.query}
+                  domains={lookupQuery.data.data}
                   onRegister={handleDomainRegister}
                 />
               </div>
@@ -129,7 +103,7 @@ export default function Lookup() {
       )}
 
       {/* Empty State */}
-      {!searchResults && !isLoading && (
+      {!lookupQuery.data && !lookupQuery.isFetching && (
         <section className="py-16 px-4">
           <div className="container mx-auto text-center max-w-2xl">
             <div className="space-y-6">

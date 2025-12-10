@@ -35,7 +35,7 @@ export default function DomainDetails({ domain }) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-mono">
-            {domain.name}.nock
+            {domain.name}
           </CardTitle>
           <Badge
             variant={domain.isAvailable ? "default" : "secondary"}
@@ -122,8 +122,9 @@ export default function DomainDetails({ domain }) {
                     </span>
                     <div className="flex items-center gap-2">
                       <span
-                        className="font-mono text-sm bg-muted px-2 py-1 rounded"
+                        className="font-mono text-sm bg-muted px-2 py-1 rounded break-words"
                         data-testid="text-owner-address"
+                        style={{ wordBreak: 'break-word' }}
                       >
                         {domain.owner}
                       </span>

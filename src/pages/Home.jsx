@@ -9,18 +9,14 @@ import WalletConnection from "@/components/WalletConnection";
 import RegistrationModal from "@/components/RegistrationModal";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
+import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NockchainProvider, wasm } from "@nockbox/iris-sdk";
 
-import { fetchSearchResults, fetchSuggestions } from "@/api";
-
 export default function Home() {
   const [provider, setProvider] = useState(null);
   const [rpcClient, setRpcClient] = useState(null);
-  const [searchResults, setSearchResults] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const {
@@ -34,6 +30,16 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [connectedAccount, setConnectedAccount] = useState(null);
   const wasmInitRef = useRef(false);
+
+  const searchQuery = useDomainSearch(searchTerm);
+  const suggestionsQuery = useSuggestions(
+    searchTerm,
+    Boolean(searchQuery.data && !searchQuery.data.isAvailable)
+  );
+
+  const searchResults = searchQuery.data ? [searchQuery.data] : [];
+  const suggestions = suggestionsQuery.data || [];
+  const isLoading = searchQuery.isFetching || suggestionsQuery.isFetching;
 
   useEffect(() => {
     const initWalletAndWasm = async () => {
@@ -61,31 +67,8 @@ export default function Home() {
   }, []);
 
   const handleSearch = async (domain) => {
-    setIsLoading(true);
     setSearchTerm(domain);
     console.log(`Searching for domain: ${domain}`);
-
-    try {
-      const data = await fetchSearchResults(domain);
-      if (data) {
-        setSearchResults([data]);
-        if (!data.isAvailable) {
-          const suggs = await fetchSuggestions(domain);
-          setSuggestions(suggs || []);
-        } else {
-          setSuggestions([]);
-        }
-      } else {
-        setSearchResults([]);
-        setSuggestions([]);
-      }
-    } catch (error) {
-      console.error("Search failed", error);
-      setSearchResults([]);
-      setSuggestions([]);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleRegister = (domain) => {
