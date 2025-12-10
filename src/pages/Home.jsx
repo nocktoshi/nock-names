@@ -8,12 +8,13 @@ import RecentlyRegistered from "@/components/RecentlyRegistered";
 import WalletConnection from "@/components/WalletConnection";
 import RegistrationModal from "@/components/RegistrationModal";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { NockchainProvider, wasm } from "@nockbox/iris-sdk";
 
-import { fetchSearchResults, postRegister } from "@/api";
-import { getFee, PAYMENT_ADDRESS } from "@/common";
+import { fetchSearchResults } from "@/api";
+import { getFee } from "@/common";
 
 export default function Home() {
   const [searchResults, setSearchResults] = useState([]);
@@ -21,13 +22,17 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [transactionStatus, setTransactionStatus] = useState();
-  const [statusText, setStatusText] = useState("");
+  const {
+    status: transactionStatus,
+    statusText,
+    transactionHash,
+    isProcessing: isRegistering,
+    registerDomain,
+    reset: resetRegistration,
+  } = useRegistrationFlow({ provider, rpcClient, wasm });
   const [searchTerm, setSearchTerm] = useState("");
   const [connectedAccount, setConnectedAccount] = useState(null);
   const [provider, setProvider] = useState(null);
-  const [transactionHash, setTransactionHash] = useState();
   const [rpcClient, setRpcClient] = useState(null);
 
   useEffect(() => {
@@ -105,184 +110,20 @@ export default function Home() {
   };
 
   const handleRegister = (domain) => {
+    resetRegistration();
     setSelectedDomain(domain);
     setIsModalOpen(true);
-    setTransactionStatus(undefined);
   };
 
   const handleConfirmRegistration = async (name) => {
     console.log(`Confirming registration for: ${name}`);
-    setIsRegistering(true);
-    setStatusText("");
-
-    const address = connectedAccount;
-
-    try {
-      if (!/^[a-z0-9]+\.nock$/.test(name)) {
-        setTransactionStatus("failed");
-        setStatusText("Name must be alphanumeric lowercase and end with .nock");
-        return;
-      }
-      if (!address) {
-        setTransactionStatus("failed");
-        setStatusText("Please connect your wallet first");
-        return;
-      }
-
-      const response = await postRegister(name, address);
-      const [status, responseName] = response.key.split(":");
-      if (status === "pending") {
-        const fee = getFee(responseName);
-        setTransactionStatus("sending");
-        setStatusText("Sending transaction...");
-
-        try {
-          // Implement full WASM transaction flow as recommended by devs:
-          // 1. Get balance with WASM gRPC client
-          // 2. Build tx with WASM using user's balance/notes
-          // 3. Sign with provider
-          // 4. Send signed tx over WASM gRPC client
-
-          setStatusText("Fetching wallet balance...");
-
-          console.log("Connected address:", address);
-
-          // Get balance from the blockchain
-          let balance, spendCondition;
-          try {
-            const pkh = wasm.Pkh.single(address);
-            console.log("PKH created:", pkh);
-
-            spendCondition = wasm.SpendCondition.newPkh(pkh);
-            console.log("Spend condition created:", spendCondition);
-
-            const firstName = spendCondition.firstName();
-            console.log("First name:", firstName.value);
-
-            balance = await rpcClient.getBalanceByFirstName(firstName.value);
-            if (!balance || !balance.notes || balance.notes.length === 0) {
-              console.log("No notes found - wallet might be empty");
-              setTransactionStatus("failed");
-              setStatusText("No funds available in wallet");
-              return;
-            }
-          } catch (balanceError) {
-            console.error("Error fetching balance:", balanceError);
-            setTransactionStatus("failed");
-            setStatusText("Failed to fetch wallet balance");
-            return;
-          }
-
-          console.log("Found " + balance.notes.length + " notes");
-
-          // Convert notes from protobuf
-          const notes = balance.notes.map((n) =>
-            wasm.Note.fromProtobuf(n.note)
-          );
-          notes.sort((a, b) => Number(b.assets) - Number(a.assets));
-          const note = notes[0];
-          const noteAssets = note.assets;
-          console.log("Using note with " + noteAssets + " nicks");
-
-          const amount = BigInt(fee * 65536);
-          const feePerWord = BigInt(32768); // 0.5 NOCK per word
-
-          console.log("Building transaction to send " + amount + " nicks...");
-          const builder = new wasm.TxBuilder(feePerWord);
-
-          // Create recipient digest - using PAYMENT_ADDRESS from common
-          const recipient = PAYMENT_ADDRESS;
-          const recipientDigest = new wasm.Digest(recipient);
-
-          // Create refund digest (same as wallet PKH)
-          const refundDigest = new wasm.Digest(address);
-          console.log("Creating simple spend...");
-          console.log({
-            note: notes[0].value,
-            sc: spendCondition.value,
-            rec: recipientDigest.value,
-            amt: amount,
-            ref: refundDigest.value,
-          });
-          builder.simpleSpend(
-            [notes[0]],
-            [spendCondition],
-            recipientDigest,
-            amount,
-            null, // fee_override (let it auto-calculate)
-            refundDigest,
-            false // include_lock_data (no lockData for lower fees)
-          );
-
-          // 7. Build the transaction and get notes/spend conditions
-          console.log("Building raw transaction...");
-          const nockchainTx = builder.build();
-          console.log("Transaction ID: " + nockchainTx.id.value);
-
-          const rawTxProtobuf = nockchainTx.toRawTx().toProtobuf();
-
-          // Get notes and spend conditions from builder
-          const txNotes = builder.allNotes();
-
-          console.log("Notes count: " + txNotes.notes.length);
-          console.log(
-            "Spend conditions count: " + txNotes.spendConditions.length
-          );
-
-          // 8. Sign using provider.signRawTx (pass wasm notes directly)
-          setStatusText("Signing transaction...");
-
-          // Sign the transaction with provider
-          const signedTxProtobuf = await provider.signRawTx({
-            rawTx: rawTxProtobuf, // Pass wasm RawTx directly
-            notes: txNotes.notes, // Pass wasm Note objects directly
-            spendConditions: txNotes.spendConditions, // Pass wasm SpendCondition objects directly
-          });
-
-          console.log("Transaction signed successfully!");
-
-          setStatusText("Sending transaction...");
-
-          // Send via WASM gRPC client
-          console.log("Sending transaction via RPC client...");
-          const result = await rpcClient.sendTransaction(signedTxProtobuf);
-          console.log("Transaction result:", result);
-          console.log("Transaction sent, TX ID:", nockchainTx.id.value);
-
-          setTransactionHash(nockchainTx.id.value);
-          setTransactionStatus("pending");
-          setStatusText(
-            `Transaction sent! Waiting for confirmation...\nTransaction Hash: ${nockchainTx.id.value}`
-          );
-        } catch (error) {
-          console.error("Transaction error:", error);
-          setTransactionStatus("failed");
-          setStatusText("Error during transaction: " + error);
-        } finally {
-          setIsRegistering(false);
-        }
-      } else if (status === "confirmed") {
-        setTransactionStatus("confirmed");
-        setStatusText("Domain registered successfully!");
-      } else {
-        setTransactionStatus("failed");
-        setStatusText("Registration failed");
-      }
-    } catch (error) {
-      setTransactionStatus("failed");
-      setStatusText(
-        "Error during transaction: " +
-          (error?.response?.data?.error ?? error.message ?? error)
-      );
-    }
+    await registerDomain(name, connectedAccount);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedDomain(null);
-    setTransactionStatus(undefined);
-    setTransactionHash(undefined);
-    setIsRegistering(false);
+    resetRegistration();
   };
 
   return (
