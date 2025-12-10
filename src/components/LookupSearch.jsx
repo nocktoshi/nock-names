@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export default function LookupSearch({ onSearch, isLoading = false }) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchType, setSearchType] = useState('domain');
+  const [searchType, setSearchType] = useState("domain");
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,19 +16,9 @@ export default function LookupSearch({ onSearch, isLoading = false }) {
     }
   };
 
-  const detectSearchType = (value) => {
-    // Auto-detect if it looks like a wallet address (starts with 0x and is 42 characters)
-    if (value.startsWith('0x') && value.length >= 40) {
-      setSearchType('address');
-    } else {
-      setSearchType('domain');
-    }
-  };
-
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    detectSearchType(value);
   };
 
   return (
@@ -53,9 +43,9 @@ export default function LookupSearch({ onSearch, isLoading = false }) {
                 data-testid="input-lookup-search"
                 type="text"
                 placeholder={
-                  searchType === 'domain' 
-                    ? "Enter domain name (e.g., johndoe)" 
-                    : "Enter wallet address (0x...)"
+                searchType === "domain"
+                  ? "Enter domain name (e.g., johndoe)"
+                  : "Enter wallet address"
                 }
                 value={searchTerm}
                 onChange={handleInputChange}

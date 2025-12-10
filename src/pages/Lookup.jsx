@@ -6,112 +6,22 @@ import DomainDetails from "@/components/DomainDetails";
 import AddressPortfolio from "@/components/AddressPortfolio";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useLookupQuery } from "@/hooks/use-queries";
 
 export default function Lookup() {
-  const [searchResults, setSearchResults] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // todo: remove mock functionality
-  const mockDomainLookup = (name) => {
-    const mockDomains = {
-      'johndoe': {
-        id: "lookup-1",
-        name: "johndoe",
-        price: "0.08",
-        isAvailable: false,
-        owner: "8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5",
-        registeredAt: new Date("2024-01-15T14:30:00Z"),
-        expiresAt: new Date("2026-01-15T14:30:00Z"),
-      },
-      'cryptogamer': {
-        id: "lookup-2", 
-        name: "cryptogamer",
-        price: "0.15",
-        isAvailable: false,
-        owner: "0x8ba1f109551bD432803012645Hac136c54c4e4cb",
-        registeredAt: new Date("2024-01-15T13:45:00Z"),
-        expiresAt: new Date("2026-01-15T13:45:00Z"),
-      },
-      'available': {
-        id: "lookup-3",
-        name: "available",
-        price: "0.1",
-        isAvailable: true,
-        owner: null,
-        registeredAt: null,
-        expiresAt: null,
-      }
-    };
-    
-    return mockDomains[name.toLowerCase()] || null;
-  };
-
-  // todo: remove mock functionality
-  const mockAddressLookup = (address) => {
-    const mockPortfolios = {
-      '8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5': [
-        {
-          id: "portfolio-1",
-          name: "johndoe",
-          price: "0.08",
-          isAvailable: false,
-          owner: "8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5",
-          registeredAt: new Date("2024-01-15T14:30:00Z"),
-          expiresAt: new Date("2026-01-15T14:30:00Z"),
-        },
-        {
-          id: "portfolio-2",
-          name: "myawesome",
-          price: "0.12",
-          isAvailable: false,
-          owner: "8s29XUK8Do7QWt2MHfPdd1gDSta6db4c3bQrxP1YdJNfXpL3WPzTT5",
-          registeredAt: new Date("2024-01-10T10:15:00Z"),
-          expiresAt: new Date("2026-01-10T10:15:00Z"),
-        }
-      ],
-      '0x8ba1f109551bD432803012645Hac136c54c4e4cb': [
-        {
-          id: "portfolio-3",
-          name: "cryptogamer",
-          price: "0.15",
-          isAvailable: false,
-          owner: "0x8ba1f109551bD432803012645Hac136c54c4e4cb",
-          registeredAt: new Date("2024-01-15T13:45:00Z"),
-          expiresAt: new Date("2026-01-15T13:45:00Z"),
-        }
-      ]
-    };
-    
-    return mockPortfolios[address] || [];
-  };
+  const [params, setParams] = useState({ query: null, type: "domain" });
+  const [error, setError] = useState("");
+  const lookupQuery = useLookupQuery(params);
 
   const handleSearch = async (query, type) => {
-    setIsLoading(true);
+    setError("");
     console.log(`Looking up ${type}: ${query}`);
-    
-    // Simulate API call
-    setTimeout(() => {
-      if (type === 'domain') {
-        const domain = mockDomainLookup(query);
-        if (domain) {
-          setSearchResults({ type: 'domain', data: domain, query });
-        } else {
-          setSearchResults({ type: 'domain', data: {
-            id: 'not-found',
-            name: query,
-            price: "0.1",
-            isAvailable: true,
-            owner: null,
-            registeredAt: null,
-            expiresAt: null,
-          }, query });
-        }
-      } else {
-        const domains = mockAddressLookup(query);
-        setSearchResults({ type: 'address', data: domains, query });
-      }
-      setIsLoading(false);
-    }, 1000);
+    try {
+      setParams({ query, type });
+    } catch (e) {
+      console.error("Lookup failed", e);
+      setError("Lookup failed. Please try again.");
+    }
   };
 
   const handleDomainRegister = (domain) => {
@@ -150,35 +60,40 @@ export default function Lookup() {
             Search for detailed domain information by name or explore all domains owned by a wallet address
           </p>
           
-          <LookupSearch onSearch={handleSearch} isLoading={isLoading} />
+          <LookupSearch onSearch={handleSearch} isLoading={lookupQuery.isFetching} />
+          {error && (
+            <p className="text-sm text-destructive mt-3" role="alert">
+              {error}
+            </p>
+          )}
         </div>
       </section>
 
       {/* Results Section */}
-      {searchResults && (
+      {lookupQuery.data && (
         <section className="py-8 px-4 no-default-hover-elevate">
           <div className="container mx-auto">
-            {searchResults.type === 'domain' ? (
+            {lookupQuery.data.type === 'domain' ? (
               <div className="space-y-4">
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-semibold mb-2">Domain Information</h3>
                   <p className="text-muted-foreground">
-                    Results for domain "<span className="font-mono">{searchResults.query}</span>"
+                    Results for domain "<span className="font-mono">{lookupQuery.data.query}</span>"
                   </p>
                 </div>
-                <DomainDetails domain={searchResults.data} />
+                <DomainDetails domain={lookupQuery.data.data} />
               </div>
             ) : (
               <div className="space-y-4">
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-semibold mb-2">Address Portfolio</h3>
                   <p className="text-muted-foreground">
-                    Domains owned by "<span className="font-mono text-xs">{searchResults.query}</span>"
+                    Domains owned by "<span className="font-mono text-xs">{lookupQuery.data.query}</span>"
                   </p>
                 </div>
                 <AddressPortfolio 
-                  address={searchResults.query}
-                  domains={searchResults.data}
+                  address={lookupQuery.data.query}
+                  domains={lookupQuery.data.data}
                   onRegister={handleDomainRegister}
                 />
               </div>
@@ -188,7 +103,7 @@ export default function Lookup() {
       )}
 
       {/* Empty State */}
-      {!searchResults && !isLoading && (
+      {!lookupQuery.data && !lookupQuery.isFetching && (
         <section className="py-16 px-4">
           <div className="container mx-auto text-center max-w-2xl">
             <div className="space-y-6">

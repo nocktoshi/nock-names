@@ -35,7 +35,7 @@ export default function DomainDetails({ domain }) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl font-mono">
-            {domain.name}.nock
+            {domain.name}
           </CardTitle>
           <Badge
             variant={domain.isAvailable ? "default" : "secondary"}
@@ -122,8 +122,9 @@ export default function DomainDetails({ domain }) {
                     </span>
                     <div className="flex items-center gap-2">
                       <span
-                        className="font-mono text-sm bg-muted px-2 py-1 rounded"
+                        className="font-mono text-sm bg-muted px-2 py-1 rounded break-words"
                         data-testid="text-owner-address"
+                        style={{ wordBreak: 'break-word' }}
                       >
                         {domain.owner}
                       </span>
@@ -156,10 +157,27 @@ export default function DomainDetails({ domain }) {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Button variant="outline" className="gap-2">
-            <ExternalLink className="h-4 w-4" />
-            View on Explorer
-          </Button>
+          {domain.owner ? (
+            <Button
+              variant="outline"
+              className="gap-2"
+              asChild
+            >
+              <a
+                href={`https://nockblocks.com/address/${domain.owner}?tab=transactions`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View on Explorer
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" className="gap-2" disabled>
+              <ExternalLink className="h-4 w-4" />
+              View on Explorer
+            </Button>
+          )}
           {domain.owner && (
             <Button variant="outline" className="gap-2">
               <Clock className="h-4 w-4" />

@@ -96,6 +96,17 @@ export default function DomainCard({
               "Register Domain"
             )}
           </Button>
+        ) : domain.owner ? (
+          <Button variant="outline" className="w-full" asChild>
+            <a
+              href={`https://nockblocks.com/address/${domain.owner}?tab=transactions`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View on Explorer
+            </a>
+          </Button>
         ) : (
           <Button variant="outline" className="w-full" disabled>
             <ExternalLink className="h-4 w-4 mr-2" />
