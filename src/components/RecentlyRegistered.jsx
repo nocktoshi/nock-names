@@ -9,7 +9,7 @@ import { getFee } from "@/common";
 
 dayjs.extend(relativeTime);
 
-export default function RecentlyRegistered({ limit = 9 }) {
+export default function RecentlyRegistered({ limit = 12 }) {
   const { data: recentRegistrations = [], isFetching } =
     useRecentRegistrations(limit);
 
