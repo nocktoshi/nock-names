@@ -1,5 +1,5 @@
-import React from "react";
-import { AlertTriangle, Clock, Check, X, Lock} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { AlertTriangle, Clock, Check, X, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,10 +29,25 @@ export default function RegistrationModal({
   irisError,
   isIrisReady = true,
 }) {
-  if (!domain) return null;
+  const [confirmClickLocked, setConfirmClickLocked] = useState(false);
   const status = domain.status ?? (domain.isAvailable ? "available" : "registered");
   const pendingOwner = status === "pending" ? domain.owner : null;
   const effectiveAddress = status === "pending" ? pendingOwner : account;
+
+  // Prevent rapid double-clicks from triggering multiple registration attempts
+  // before `isProcessing` flips true in parent state.
+  useEffect(() => {
+    if (!isOpen) setConfirmClickLocked(false);
+  }, [isOpen, domain?.name]);
+
+  const isConfirmDisabled =
+    !isIrisReady ||
+    confirmClickLocked ||
+    isProcessing ||
+    transactionStatus === "pending" ||
+    transactionStatus === "confirmed" ||
+    !account ||
+    typeof onConfirm !== "function";
 
   const getStatusDisplay = () => {
     if (!transactionStatus || transactionStatus === "idle") return null;
@@ -169,13 +184,16 @@ export default function RegistrationModal({
             )}
             <Button
               className="flex-1 web3-gradient hover:shadow-lg"
-              onClick={async () => await onConfirm(domain.name)}
-              // disabled={
-              //   !isIrisReady ||
-              //   isProcessing ||
-              //   transactionStatus === "confirmed" ||
-              //   !account
-              // }
+              disabled={isConfirmDisabled}
+              onClick={async () => {
+                if (isConfirmDisabled) return;
+                setConfirmClickLocked(true);
+                try {
+                  await onConfirm(domain.name);
+                } finally {
+                  setConfirmClickLocked(false);
+                }
+              }}
               data-testid="button-confirm-registration"
             >
               {isProcessing ? (

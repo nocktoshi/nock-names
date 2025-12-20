@@ -111,7 +111,7 @@ export default function DomainCard({
               "Register Domain"
             )}
           </Button>
-        ) : isPending ? (
+        ) : isPending && domain.owner ? (
           <div className="w-full flex flex-col gap-2 sm:flex-row">
             <Button
               variant="outline"

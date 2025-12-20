@@ -194,7 +194,7 @@ export default function DomainDetails({
               View on Explorer
             </Button>
           )}
-          {isPending ? (
+          {isPending && domain.owner ? (
             <Button
               className="gap-2"
               onClick={() => onRegister?.(domain)}

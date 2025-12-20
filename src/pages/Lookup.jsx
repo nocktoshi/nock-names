@@ -10,6 +10,8 @@ import { useLookupQuery } from "@/hooks/use-queries";
 import RegistrationModal from "@/components/RegistrationModal";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useIris } from "@/hooks/use-iris";
+import ThemeToggle from "@/components/ThemeToggle";
+import WalletConnection from "@/components/WalletConnection";
 
 export default function Lookup() {
   const iris = useIris();
@@ -71,19 +73,32 @@ export default function Lookup() {
       {/* Header */}
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <Button variant="outline" size="icon" data-testid="button-back-home">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Search className="h-5 w-5 text-primary" />
-              <h1 className="text-xl font-bold">Domain Lookup</h1>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link href="/">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  data-testid="button-back-home"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              </Link>
+              <div className="flex items-center gap-2">
+                <Search className="h-5 w-5 text-primary" />
+                <h1 className="text-xl font-bold">Domain Lookup</h1>
+              </div>
+              <Badge variant="secondary" className="text-xs cursor-pointer">
+                Beta
+              </Badge>
             </div>
-            <Badge variant="secondary" className="text-xs cursor-pointer">
-              Beta
-            </Badge>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <WalletConnection
+                provider={provider}
+                onAccountChange={setConnectedAccount}
+              />
+            </div>
           </div>
         </div>
       </header>
