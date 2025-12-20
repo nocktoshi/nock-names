@@ -174,7 +174,8 @@ export function useRegistrationFlow({ provider, rpcClient }) {
             null,
             refundDigest,
             false,
-            `nockname=${name}` //memo
+            // TODO: Hold on memo until iris is ready
+            //`nockname=${name}` //memo
           );
 
           const nockchainTx = builder.build();
