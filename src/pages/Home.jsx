@@ -10,7 +10,7 @@ import RegistrationModal from "@/components/RegistrationModal";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
-import { useIris } from "@nockbox/iris-sdk";
+import { useIris } from "@/hooks/use-iris";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 

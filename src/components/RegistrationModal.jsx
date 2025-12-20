@@ -170,12 +170,12 @@ export default function RegistrationModal({
             <Button
               className="flex-1 web3-gradient hover:shadow-lg"
               onClick={async () => await onConfirm(domain.name)}
-              disabled={
-                !isIrisReady ||
-                isProcessing ||
-                transactionStatus === "confirmed" ||
-                !account
-              }
+              // disabled={
+              //   !isIrisReady ||
+              //   isProcessing ||
+              //   transactionStatus === "confirmed" ||
+              //   !account
+              // }
               data-testid="button-confirm-registration"
             >
               {isProcessing ? (

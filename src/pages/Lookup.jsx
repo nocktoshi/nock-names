@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLookupQuery } from "@/hooks/use-queries";
 import RegistrationModal from "@/components/RegistrationModal";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
-import { useIris } from "@nockbox/iris-sdk";
+import { useIris } from "@/hooks/use-iris";
 
 export default function Lookup() {
   const iris = useIris();

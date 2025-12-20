@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { PAYMENT_ADDRESS, getFee } from "@/common";
 import { postRegister, postVerify } from "@/api";
-import { Pkh, TxBuilder, SpendCondition, Digest, Note } from "@nockbox/iris-sdk/wasm";
+import { Pkh, TxBuilder, SpendCondition, Digest, Note } from "@nockbox/iris-wasm";
 
 const STATUSES = {
   idle: "idle",
@@ -166,9 +166,15 @@ export function useRegistrationFlow({ provider, rpcClient }) {
           const recipientDigest = new Digest(PAYMENT_ADDRESS);
           const refundDigest = new Digest(address);
 
+          // `simpleSpend` expects notes and spend_conditions to have the same length.
+          // Also, `SpendCondition.newPkh` consumes the passed `Pkh`, so create a fresh one per note.
+          const spendConditions = notes.map(() =>
+            SpendCondition.newPkh(Pkh.single(address))
+          );
+
           builder.simpleSpend(
-            [note],
-            [spendCondition],
+            notes,
+            spendConditions,
             recipientDigest,
             amount,
             null,
