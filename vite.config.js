@@ -12,6 +12,13 @@ export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
     assetsInclude: ["**/*.wasm"],
+    // Avoid Vite prebundling these deps: their wasm loader relies on
+    // `new URL('iris_wasm_bg.wasm', import.meta.url)` and prebundling can
+    // rewrite the URL to /node_modules/.vite/deps/... while not emitting
+    // the wasm asset (resulting in SPA fallback HTML + wrong MIME type).
+    optimizeDeps: {
+      exclude: ["@nockbox/iris-wasm", "@nockbox/iris-sdk"],
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "src"),

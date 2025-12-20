@@ -7,7 +7,7 @@ vi.mock("@/api", () => ({
   postRegister: (...args) => mockPostRegister(...args),
 }));
 
-const buildWasmMock = () => {
+function buildWasmMock() {
   class TxBuilder {
     constructor() {}
     simpleSpend() {}
@@ -49,7 +49,10 @@ const buildWasmMock = () => {
     TxBuilder,
     Digest,
   };
-};
+}
+
+// The hook imports these directly; mock them so tests don't try to load real WASM.
+vi.mock("@nockbox/iris-wasm", () => buildWasmMock());
 
 describe("useRegistrationFlow", () => {
   const provider = {
@@ -61,7 +64,6 @@ describe("useRegistrationFlow", () => {
     })),
     sendTransaction: vi.fn(async () => ({ ok: true })),
   };
-  const wasm = buildWasmMock();
 
   beforeEach(() => {
     mockPostRegister.mockReset();
@@ -72,7 +74,7 @@ describe("useRegistrationFlow", () => {
 
   it("fails validation when name is invalid", async () => {
     const { result } = renderHook(() =>
-      useRegistrationFlow({ provider, rpcClient, wasm })
+      useRegistrationFlow({ provider, rpcClient })
     );
 
     await act(async () => {
@@ -85,7 +87,7 @@ describe("useRegistrationFlow", () => {
 
   it("fails when address is missing", async () => {
     const { result } = renderHook(() =>
-      useRegistrationFlow({ provider, rpcClient, wasm })
+      useRegistrationFlow({ provider, rpcClient })
     );
 
     await act(async () => {
@@ -97,10 +99,14 @@ describe("useRegistrationFlow", () => {
   });
 
   it("sets pending status after successful send", async () => {
-    mockPostRegister.mockResolvedValue({ key: "pending:good.nock" });
+    mockPostRegister.mockResolvedValue({
+      status: "pending",
+      name: "good.nock",
+      address: "addr123",
+    });
 
     const { result } = renderHook(() =>
-      useRegistrationFlow({ provider, rpcClient, wasm })
+      useRegistrationFlow({ provider, rpcClient })
     );
 
     await act(async () => {

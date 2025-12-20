@@ -50,9 +50,18 @@ export default function RecentlyRegistered({ limit = 12 }) {
                   >
                     {registration.name}
                   </h4>
-                  <Badge variant="outline" className="text-xs">
-                    Registered
-                  </Badge>
+                  {registration.status === "pending" ? (
+                    <Badge
+                      variant="secondary"
+                      className="text-xs bg-yellow-500 text-black border-transparent no-default-hover-elevate"
+                    >
+                      Pending
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-xs">
+                      Registered
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="space-y-2 text-xs">

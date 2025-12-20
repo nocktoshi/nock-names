@@ -1,5 +1,5 @@
-import React from "react";
-import { AlertTriangle, Clock, Check, X, Lock} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { AlertTriangle, Clock, Check, X, Lock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ export default function RegistrationModal({
   isOpen,
   onClose,
   onConfirm,
+  onVerify,
   isProcessing = false,
   transactionHash,
   transactionStatus,
@@ -24,8 +25,33 @@ export default function RegistrationModal({
   account,
   onAccountChange,
   provider,
+  irisStatus,
+  irisError,
+  isIrisReady = true,
 }) {
+  const [confirmClickLocked, setConfirmClickLocked] = useState(false);
+
+  // Prevent rapid double-clicks from triggering multiple registration attempts
+  // before `isProcessing` flips true in parent state.
+  useEffect(() => {
+    if (!isOpen) setConfirmClickLocked(false);
+  }, [isOpen, domain?.name]);
+
   if (!domain) return null;
+
+  const status =
+    domain.status ?? (domain.isAvailable ? "available" : "registered");
+  const pendingOwner = status === "pending" ? domain.owner : null;
+  const effectiveAddress = status === "pending" ? pendingOwner : account;
+
+  const isConfirmDisabled =
+    !isIrisReady ||
+    confirmClickLocked ||
+    isProcessing ||
+    transactionStatus === "pending" ||
+    transactionStatus === "confirmed" ||
+    !account ||
+    typeof onConfirm !== "function";
 
   const getStatusDisplay = () => {
     if (!transactionStatus || transactionStatus === "idle") return null;
@@ -38,6 +64,7 @@ export default function RegistrationModal({
     const statusConfig = {
       building: baseStatus,
       requesting: baseStatus,
+      verifying: baseStatus,
       signing: { ...baseStatus, icon: Lock },
       sending: baseStatus,
       pending: { ...baseStatus, icon: AlertTriangle },
@@ -78,9 +105,20 @@ export default function RegistrationModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span>Register Domain</span>
-            <Badge variant="default" className="bg-chart-2">
-              Available
-            </Badge>
+            {status === "available" ? (
+              <Badge variant="default" className="bg-chart-2">
+                Available
+              </Badge>
+            ) : status === "pending" ? (
+              <Badge
+                variant="secondary"
+                className="bg-yellow-500 text-black border-transparent no-default-hover-elevate"
+              >
+                Pending
+              </Badge>
+            ) : (
+              <Badge variant="destructive">Registered</Badge>
+            )}
           </DialogTitle>
           <DialogDescription>Register this .nock name</DialogDescription>
         </DialogHeader>
@@ -102,11 +140,14 @@ export default function RegistrationModal({
               </div>
               <Separator />
               <label className="text-sm">Address:</label>
-              {!account ? (
-                <WalletConnection provider={provider} onAccountChange={onAccountChange} />
+              {!effectiveAddress ? (
+                <WalletConnection
+                  provider={provider}
+                  onAccountChange={onAccountChange}
+                />
               ) : (
                 <div className="font-mono text-sm bg-background px-3 py-2 rounded border">
-                  {account.slice(0, 6)}...{account.slice(-4)}
+                  {effectiveAddress.slice(0, 6)}...{effectiveAddress.slice(-4)}
                 </div>
               )}
             </div>
@@ -117,21 +158,46 @@ export default function RegistrationModal({
 
           {/* Actions */}
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={onClose}
-              disabled={isProcessing && status === "pending"}
-              data-testid="button-cancel-registration"
-            >
-              {transactionStatus === "confirmed" ? "Close" : "Cancel"}
-            </Button>
+            {status === "pending" ? (
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={async () =>
+                  await onVerify?.(domain.name, pendingOwner ?? null)
+                }
+                disabled={
+                  !isIrisReady ||
+                  isProcessing ||
+                  !pendingOwner ||
+                  !onVerify
+                }
+                data-testid="button-verify-payment"
+              >
+                Verify Payment
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={onClose}
+                disabled={isProcessing && transactionStatus === "pending"}
+                data-testid="button-cancel-registration"
+              >
+                {transactionStatus === "confirmed" ? "Close" : "Cancel"}
+              </Button>
+            )}
             <Button
               className="flex-1 web3-gradient hover:shadow-lg"
-              onClick={async () => await onConfirm(domain.name)}
-              disabled={
-                isProcessing || transactionStatus === "confirmed" || !account
-              }
+              disabled={isConfirmDisabled}
+              onClick={async () => {
+                if (isConfirmDisabled) return;
+                setConfirmClickLocked(true);
+                try {
+                  await onConfirm(domain.name);
+                } finally {
+                  setConfirmClickLocked(false);
+                }
+              }}
               data-testid="button-confirm-registration"
             >
               {isProcessing ? (
@@ -145,10 +211,18 @@ export default function RegistrationModal({
                   Registered
                 </>
               ) : (
-                "Confirm Registration"
+                `Pay ${domain.price} NOCK`
               )}
             </Button>
           </div>
+
+          {!isIrisReady && (
+            <p className="text-xs text-muted-foreground">
+              {irisStatus === "error"
+                ? `Iris initialization failed: ${irisError?.message ?? String(irisError)}`
+                : "Initializing Iris…"}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

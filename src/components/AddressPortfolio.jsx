@@ -8,7 +8,11 @@ export default function AddressPortfolio({ address, domains, onRegister }) {
     (sum, domain) => sum + parseFloat(domain.price),
     0
   );
-  const activeDomains = domains.filter((d) => !d.isAvailable).length;
+  const statuses = domains.map(
+    (d) => d.status ?? (d.isAvailable ? "available" : "registered")
+  );
+  const registeredCount = statuses.filter((s) => s === "registered").length;
+  const pendingCount = statuses.filter((s) => s === "pending").length;
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
@@ -35,7 +39,7 @@ export default function AddressPortfolio({ address, domains, onRegister }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="text-2xl font-bold text-primary">
                 {domains.length}
@@ -43,10 +47,16 @@ export default function AddressPortfolio({ address, domains, onRegister }) {
               <div className="text-sm text-muted-foreground">Total Domains</div>
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
-              <div className="text-2xl font-bold text-chart-2">
-                {activeDomains}
+              <div className="text-2xl font-bold text-green-500">
+                {registeredCount}
               </div>
               <div className="text-sm text-muted-foreground">Registered</div>
+            </div>
+            <div className="text-center p-4 bg-muted rounded-lg">
+              <div className="text-2xl font-bold text-yellow-500">
+                {pendingCount}
+              </div>
+              <div className="text-sm text-muted-foreground">Pending</div>
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="text-2xl font-bold text-chart-3">

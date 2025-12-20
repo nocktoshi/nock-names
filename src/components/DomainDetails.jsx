@@ -4,7 +4,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export default function DomainDetails({ domain }) {
+export default function DomainDetails({
+  domain,
+  onRegister,
+  isRegistering = false,
+  isRegisterDisabled = false,
+}) {
+  const status = domain.status ?? (domain.isAvailable ? "available" : "registered");
+  const isAvailable = status === "available";
+  const isPending = status === "pending";
+  const canRegister = typeof onRegister === "function";
+  const statusBadgeClassName = isPending
+    ? "bg-yellow-500 text-black border-transparent no-default-hover-elevate"
+    : undefined;
+
   const formatDate = (date) => {
     if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-US", {
@@ -38,10 +51,10 @@ export default function DomainDetails({ domain }) {
             {domain.name}
           </CardTitle>
           <Badge
-            variant={domain.isAvailable ? "default" : "secondary"}
-            className="text-sm"
+            variant={isAvailable ? "default" : "secondary"}
+            className={["text-sm", statusBadgeClassName].filter(Boolean).join(" ")}
           >
-            {domain.isAvailable ? "Available" : "Registered"}
+            {status}
           </Badge>
         </div>
       </CardHeader>
@@ -59,8 +72,11 @@ export default function DomainDetails({ domain }) {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status</span>
-                <Badge variant={domain.isAvailable ? "outline" : "default"}>
-                  {domain.isAvailable ? "Available" : "Registered"}
+                <Badge
+                  variant={isAvailable ? "outline" : "default"}
+                  className={statusBadgeClassName}
+                >
+                  {status}
                 </Badge>
               </div>
               <div className="flex justify-between">
@@ -178,14 +194,31 @@ export default function DomainDetails({ domain }) {
               View on Explorer
             </Button>
           )}
-          {domain.owner && (
+          {isPending && domain.owner ? (
+            <Button
+              className="gap-2"
+              onClick={() => onRegister?.(domain)}
+              disabled={!canRegister || isRegistering || isRegisterDisabled}
+              data-testid={`button-complete-payment-${domain.name}`}
+            >
+              Complete Payment
+            </Button>
+          ) : domain.owner ? (
             <Button variant="outline" className="gap-2">
               <Clock className="h-4 w-4" />
               Transaction History
             </Button>
-          )}
-          {domain.isAvailable && (
-            <Button className="gap-2">Register Domain</Button>
+          ) : null}
+
+          {isAvailable && (
+            <Button
+              className="gap-2"
+              onClick={() => onRegister?.(domain)}
+              disabled={!canRegister || isRegistering || isRegisterDisabled}
+              data-testid={`button-register-${domain.name}`}
+            >
+              Register Domain
+            </Button>
           )}
         </div>
       </CardContent>

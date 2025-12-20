@@ -55,7 +55,7 @@ export const useLookupQuery = ({ query, type }) =>
           id: "not-found",
           name: query,
           price: 0,
-          isAvailable: true,
+          status: "available",
           owner: null,
           registeredAt: null,
           expiresAt: null,
