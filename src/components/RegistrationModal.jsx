@@ -30,15 +30,19 @@ export default function RegistrationModal({
   isIrisReady = true,
 }) {
   const [confirmClickLocked, setConfirmClickLocked] = useState(false);
-  const status = domain.status ?? (domain.isAvailable ? "available" : "registered");
-  const pendingOwner = status === "pending" ? domain.owner : null;
-  const effectiveAddress = status === "pending" ? pendingOwner : account;
 
   // Prevent rapid double-clicks from triggering multiple registration attempts
   // before `isProcessing` flips true in parent state.
   useEffect(() => {
     if (!isOpen) setConfirmClickLocked(false);
   }, [isOpen, domain?.name]);
+
+  if (!domain) return null;
+
+  const status =
+    domain.status ?? (domain.isAvailable ? "available" : "registered");
+  const pendingOwner = status === "pending" ? domain.owner : null;
+  const effectiveAddress = status === "pending" ? pendingOwner : account;
 
   const isConfirmDisabled =
     !isIrisReady ||
