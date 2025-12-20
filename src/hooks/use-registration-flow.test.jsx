@@ -7,7 +7,7 @@ vi.mock("@/api", () => ({
   postRegister: (...args) => mockPostRegister(...args),
 }));
 
-const buildWasmMock = () => {
+function buildWasmMock() {
   class TxBuilder {
     constructor() {}
     simpleSpend() {}
@@ -49,7 +49,10 @@ const buildWasmMock = () => {
     TxBuilder,
     Digest,
   };
-};
+}
+
+// The hook imports these directly; mock them so tests don't try to load real WASM.
+vi.mock("@nockbox/iris-sdk/wasm", () => buildWasmMock());
 
 describe("useRegistrationFlow", () => {
   const provider = {
