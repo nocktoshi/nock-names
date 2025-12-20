@@ -7,7 +7,8 @@ export default function DomainSuggestions({
   originalSearch, 
   suggestions, 
   onRegister,
-  isRegistering = false 
+  isRegistering = false,
+  isRegisterDisabled = false,
 }) {
   if (suggestions.length === 0) {
     return null;
@@ -36,6 +37,7 @@ export default function DomainSuggestions({
               domain={domain}
               onRegister={onRegister}
               isRegistering={isRegistering}
+              isRegisterDisabled={isRegisterDisabled}
             />
           ))}
         </div>

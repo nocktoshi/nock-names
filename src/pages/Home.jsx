@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { Zap, Search } from "lucide-react";
 import { Link } from "wouter";
 import DomainSearch from "@/components/DomainSearch";
@@ -10,15 +10,21 @@ import RegistrationModal from "@/components/RegistrationModal";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
+import { useIris } from "@nockbox/iris-sdk";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { NockchainProvider, wasm } from "@nockbox/iris-sdk";
 
 export default function Home() {
-  const [provider, setProvider] = useState(null);
-  const [rpcClient, setRpcClient] = useState(null);
+  const iris = useIris();
+  const {
+    provider,
+    status: irisStatus,
+    error: irisError,
+    isReady: isIrisReady,
+  } = iris;
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const {
     status: transactionStatus,
     statusText,
@@ -26,10 +32,10 @@ export default function Home() {
     isProcessing: isRegistering,
     registerDomain,
     reset: resetRegistration,
-  } = useRegistrationFlow({ provider, rpcClient, wasm });
+  } = useRegistrationFlow(iris);
   const [searchTerm, setSearchTerm] = useState("");
   const [connectedAccount, setConnectedAccount] = useState(null);
-  const wasmInitRef = useRef(false);
+
 
   const searchQuery = useDomainSearch(searchTerm);
   const suggestionsQuery = useSuggestions(
@@ -41,43 +47,20 @@ export default function Home() {
   const suggestions = suggestionsQuery.data || [];
   const isLoading = searchQuery.isFetching || suggestionsQuery.isFetching;
 
-  useEffect(() => {
-    const initWalletAndWasm = async () => {
-      if (wasmInitRef.current) return; // avoid double init (React strict mode)
-      wasmInitRef.current = true;
-      try {
-        const wasmUrl = new URL(
-          "/iris_wasm_bg.wasm",
-          window.location.origin
-        ).toString();
-        await wasm.default(wasmUrl); // Initialize the WASM module with explicit URL
-        const client = new wasm.GrpcClient("https://rpc.nockbox.org");
-        setRpcClient(client);
-
-        // Initialize wallet provider
-        const nockchain = new NockchainProvider();
-        setProvider(nockchain); // Set provider immediately so UI can show connect button
-      } catch (error) {
-        console.error("Failed to initialize WASM or NockchainProvider:", error);
-        // Provider is still set, so user can try to connect manually
-      }
-    };
-
-    initWalletAndWasm();
-  }, []);
-
   const handleSearch = async (domain) => {
     setSearchTerm(domain);
     console.log(`Searching for domain: ${domain}`);
   };
 
   const handleRegister = (domain) => {
+    if (!isIrisReady) return;
     resetRegistration();
     setSelectedDomain(domain);
     setIsModalOpen(true);
   };
 
   const handleConfirmRegistration = async (name) => {
+    if (!isIrisReady) return;
     console.log(`Confirming registration for: ${name}`);
     await registerDomain(name, connectedAccount);
   };
@@ -160,6 +143,7 @@ export default function Home() {
                     domain={domain}
                     onRegister={handleRegister}
                     isRegistering={isRegistering}
+                    isRegisterDisabled={!isIrisReady}
                   />
                 ))}
               </div>
@@ -177,6 +161,7 @@ export default function Home() {
               suggestions={suggestions}
               onRegister={handleRegister}
               isRegistering={isRegistering}
+              isRegisterDisabled={!isIrisReady}
             />
           </div>
         </section>
@@ -265,6 +250,9 @@ export default function Home() {
         account={connectedAccount}
         onAccountChange={setConnectedAccount}
         provider={provider}
+        isIrisReady={isIrisReady}
+        irisStatus={irisStatus}
+        irisError={irisError}
       />
     </div>
   );

@@ -7,6 +7,7 @@ export default function DomainCard({
   domain,
   onRegister,
   isRegistering = false,
+  isRegisterDisabled = false,
 }) {
 
   const getStatusBadge = () => {
@@ -85,7 +86,7 @@ export default function DomainCard({
             data-testid={`button-register-${domain.name}`}
             className="w-full"
             onClick={() => onRegister(domain)}
-            disabled={isRegistering}
+            disabled={isRegistering || isRegisterDisabled}
           >
             {isRegistering ? (
               <>

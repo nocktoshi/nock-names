@@ -24,6 +24,9 @@ export default function RegistrationModal({
   account,
   onAccountChange,
   provider,
+  irisStatus,
+  irisError,
+  isIrisReady = true,
 }) {
   if (!domain) return null;
 
@@ -121,7 +124,7 @@ export default function RegistrationModal({
               variant="outline"
               className="flex-1"
               onClick={onClose}
-              disabled={isProcessing && status === "pending"}
+              disabled={isProcessing && transactionStatus === "pending"}
               data-testid="button-cancel-registration"
             >
               {transactionStatus === "confirmed" ? "Close" : "Cancel"}
@@ -130,7 +133,10 @@ export default function RegistrationModal({
               className="flex-1 web3-gradient hover:shadow-lg"
               onClick={async () => await onConfirm(domain.name)}
               disabled={
-                isProcessing || transactionStatus === "confirmed" || !account
+                !isIrisReady ||
+                isProcessing ||
+                transactionStatus === "confirmed" ||
+                !account
               }
               data-testid="button-confirm-registration"
             >
@@ -149,6 +155,14 @@ export default function RegistrationModal({
               )}
             </Button>
           </div>
+
+          {!isIrisReady && (
+            <p className="text-xs text-muted-foreground">
+              {irisStatus === "error"
+                ? `Iris initialization failed: ${irisError?.message ?? String(irisError)}`
+                : "Initializing Iris…"}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

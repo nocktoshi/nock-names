@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { PAYMENT_ADDRESS, getFee } from "@/common";
 import { postRegister } from "@/api";
+import { Pkh, TxBuilder, SpendCondition, Digest, Note } from "@nockbox/iris-sdk/wasm";
 
 const STATUSES = {
   idle: "idle",
@@ -14,7 +15,7 @@ const STATUSES = {
   failed: "failed",
 };
 
-export function useRegistrationFlow({ provider, rpcClient, wasm }) {
+export function useRegistrationFlow({ provider, rpcClient }) {
   const [status, setStatus] = useState(STATUSES.idle);
   const [statusText, setStatusText] = useState("");
   const [transactionHash, setTransactionHash] = useState();
@@ -53,9 +54,9 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
           return { ok: false };
         }
 
-        if (!rpcClient || !wasm) {
+        if (!rpcClient) {
           setStatus(STATUSES.failed);
-          setStatusText("RPC client or WASM not initialized");
+          setStatusText("RPC client not initialized");
           return { ok: false };
         }
 
@@ -74,8 +75,9 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
           setStatus(STATUSES.building);
           setStatusText("Fetching wallet balance...");
           try {
-            const pkh = wasm.Pkh.single(address);
-            spendCondition = wasm.SpendCondition.newPkh(pkh);
+            // Note: `SpendCondition.newPkh` consumes the passed `Pkh` (moves it),
+            // so don't reuse the same `Pkh` instance across calls.
+            spendCondition = SpendCondition.newPkh(Pkh.single(address));
             const firstName = spendCondition.firstName();
             balance = await rpcClient.getBalanceByFirstName(firstName.value);
 
@@ -91,14 +93,14 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
           }
 
           // Build transaction
-          const notes = balance.notes.map((n) => wasm.Note.fromProtobuf(n.note));
+          const notes = balance.notes.map((n) => Note.fromProtobuf(n.note));
           notes.sort((a, b) => Number(b.assets) - Number(a.assets));
           const note = notes[0];
           const amount = BigInt(fee * 65536);
           const feePerWord = BigInt(32768); // 0.5 NOCK per word
-          const builder = new wasm.TxBuilder(feePerWord);
-          const recipientDigest = new wasm.Digest(PAYMENT_ADDRESS);
-          const refundDigest = new wasm.Digest(address);
+          const builder = new TxBuilder(feePerWord);
+          const recipientDigest = new Digest(PAYMENT_ADDRESS);
+          const refundDigest = new Digest(address);
 
           builder.simpleSpend(
             [note],
@@ -107,7 +109,8 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
             amount,
             null,
             refundDigest,
-            false
+            false,
+            `nockname=${name}` //memo
           );
 
           const nockchainTx = builder.build();
@@ -157,14 +160,14 @@ export function useRegistrationFlow({ provider, rpcClient, wasm }) {
         setStatus(STATUSES.failed);
         setStatusText(
           "Error during transaction: " +
-            (error?.response?.data?.error ?? error.message ?? String(error))
+          (error?.response?.data?.error ?? error.message ?? String(error))
         );
         return { ok: false, error };
       } finally {
         setIsProcessing(false);
       }
     },
-    [provider, rpcClient, wasm]
+    [provider, rpcClient]
   );
 
   return {

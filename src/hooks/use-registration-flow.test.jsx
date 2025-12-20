@@ -61,7 +61,6 @@ describe("useRegistrationFlow", () => {
     })),
     sendTransaction: vi.fn(async () => ({ ok: true })),
   };
-  const wasm = buildWasmMock();
 
   beforeEach(() => {
     mockPostRegister.mockReset();
@@ -72,7 +71,7 @@ describe("useRegistrationFlow", () => {
 
   it("fails validation when name is invalid", async () => {
     const { result } = renderHook(() =>
-      useRegistrationFlow({ provider, rpcClient, wasm })
+      useRegistrationFlow({ provider, rpcClient })
     );
 
     await act(async () => {
@@ -85,7 +84,7 @@ describe("useRegistrationFlow", () => {
 
   it("fails when address is missing", async () => {
     const { result } = renderHook(() =>
-      useRegistrationFlow({ provider, rpcClient, wasm })
+      useRegistrationFlow({ provider, rpcClient })
     );
 
     await act(async () => {
@@ -100,7 +99,7 @@ describe("useRegistrationFlow", () => {
     mockPostRegister.mockResolvedValue({ key: "pending:good.nock" });
 
     const { result } = renderHook(() =>
-      useRegistrationFlow({ provider, rpcClient, wasm })
+      useRegistrationFlow({ provider, rpcClient })
     );
 
     await act(async () => {
