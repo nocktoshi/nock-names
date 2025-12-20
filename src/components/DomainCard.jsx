@@ -9,9 +9,12 @@ export default function DomainCard({
   isRegistering = false,
   isRegisterDisabled = false,
 }) {
+  const status = domain.status ?? (domain.isAvailable ? "available" : "registered");
+  const isAvailable = status === "available";
+  const isPending = status === "pending";
 
   const getStatusBadge = () => {
-    if (domain.isAvailable) {
+    if (status === "available") {
       return (
         <Badge
           variant="default"
@@ -22,10 +25,21 @@ export default function DomainCard({
         </Badge>
       );
     }
+    if (status === "pending") {
+      return (
+        <Badge
+          variant="secondary"
+          className="bg-yellow-500 text-black border-transparent no-default-hover-elevate"
+        >
+          <Clock className="h-3 w-3 mr-1" />
+          Pending
+        </Badge>
+      );
+    }
     return (
       <Badge variant="destructive">
         <X className="h-3 w-3 mr-1" />
-        Taken
+        Registered
       </Badge>
     );
   };
@@ -57,7 +71,7 @@ export default function DomainCard({
             </span>
           </div>
 
-          {!domain.isAvailable && domain.owner && (
+          {!isAvailable && domain.owner && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Owner</span>
               <span
@@ -69,7 +83,7 @@ export default function DomainCard({
             </div>
           )}
 
-          {domain.expiresAt && !domain.isAvailable && (
+          {domain.expiresAt && !isAvailable && (
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Expires</span>
               <span className="text-xs">
@@ -81,7 +95,7 @@ export default function DomainCard({
       </CardContent>
 
       <CardFooter className="p-6 pt-0">
-        {domain.isAvailable ? (
+        {isAvailable ? (
           <Button
             data-testid={`button-register-${domain.name}`}
             className="w-full"
@@ -97,6 +111,31 @@ export default function DomainCard({
               "Register Domain"
             )}
           </Button>
+        ) : isPending ? (
+          <div className="w-full flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="outline"
+              className="w-full sm:flex-1 min-w-0 whitespace-normal leading-tight"
+              asChild
+            >
+              <a
+                href={`https://nockblocks.com/address/${domain.owner}?tab=transactions`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                View on Explorer
+              </a>
+            </Button>
+            <Button
+              data-testid={`button-complete-payment-${domain.name}`}
+              className="w-full sm:flex-1 min-w-0 whitespace-normal leading-tight"
+              onClick={() => onRegister(domain)}
+              disabled={isRegistering || isRegisterDisabled}
+            >
+              Complete Payment
+            </Button>
+          </div>
         ) : domain.owner ? (
           <Button variant="outline" className="w-full" asChild>
             <a

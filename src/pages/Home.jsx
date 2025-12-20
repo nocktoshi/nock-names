@@ -31,6 +31,7 @@ export default function Home() {
     transactionHash,
     isProcessing: isRegistering,
     registerDomain,
+    verifyPayment,
     reset: resetRegistration,
   } = useRegistrationFlow(iris);
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,7 +41,7 @@ export default function Home() {
   const searchQuery = useDomainSearch(searchTerm);
   const suggestionsQuery = useSuggestions(
     searchTerm,
-    Boolean(searchQuery.data && !searchQuery.data.isAvailable)
+    Boolean(searchQuery.data && searchQuery.data.status !== "available")
   );
 
   const searchResults = searchQuery.data ? [searchQuery.data] : [];
@@ -63,6 +64,11 @@ export default function Home() {
     if (!isIrisReady) return;
     console.log(`Confirming registration for: ${name}`);
     await registerDomain(name, connectedAccount);
+  };
+
+  const handleVerifyPayment = async (name, addressOverride) => {
+    if (!isIrisReady) return;
+    await verifyPayment(name, addressOverride ?? connectedAccount);
   };
 
   const handleCloseModal = () => {
@@ -243,6 +249,7 @@ export default function Home() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onConfirm={handleConfirmRegistration}
+        onVerify={handleVerifyPayment}
         isProcessing={isRegistering}
         transactionHash={transactionHash}
         transactionStatus={transactionStatus}

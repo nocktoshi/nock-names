@@ -99,7 +99,11 @@ describe("useRegistrationFlow", () => {
   });
 
   it("sets pending status after successful send", async () => {
-    mockPostRegister.mockResolvedValue({ key: "pending:good.nock" });
+    mockPostRegister.mockResolvedValue({
+      status: "pending",
+      name: "good.nock",
+      address: "addr123",
+    });
 
     const { result } = renderHook(() =>
       useRegistrationFlow({ provider, rpcClient })

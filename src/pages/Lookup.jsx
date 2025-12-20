@@ -7,10 +7,28 @@ import AddressPortfolio from "@/components/AddressPortfolio";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLookupQuery } from "@/hooks/use-queries";
+import RegistrationModal from "@/components/RegistrationModal";
+import { useRegistrationFlow } from "@/hooks/use-registration-flow";
+import { useIris } from "@nockbox/iris-sdk";
 
 export default function Lookup() {
+  const iris = useIris();
+  const { provider, status: irisStatus, error: irisError, isReady: isIrisReady } = iris;
+  const {
+    status: transactionStatus,
+    statusText,
+    transactionHash,
+    isProcessing: isRegistering,
+    registerDomain,
+    verifyPayment,
+    reset: resetRegistration,
+  } = useRegistrationFlow(iris);
+
   const [params, setParams] = useState({ query: null, type: "domain" });
   const [error, setError] = useState("");
+  const [selectedDomain, setSelectedDomain] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [connectedAccount, setConnectedAccount] = useState(null);
   const lookupQuery = useLookupQuery(params);
 
   const handleSearch = async (query, type) => {
@@ -26,6 +44,26 @@ export default function Lookup() {
 
   const handleDomainRegister = (domain) => {
     console.log(`Registering domain from lookup: ${domain.name}`);
+    if (!isIrisReady) return;
+    resetRegistration();
+    setSelectedDomain(domain);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmRegistration = async (name) => {
+    if (!isIrisReady) return;
+    await registerDomain(name, connectedAccount);
+  };
+
+  const handleVerifyPayment = async (name, addressOverride) => {
+    if (!isIrisReady) return;
+    await verifyPayment(name, addressOverride ?? connectedAccount);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedDomain(null);
+    resetRegistration();
   };
 
   return (
@@ -81,7 +119,12 @@ export default function Lookup() {
                     Results for domain "<span className="font-mono">{lookupQuery.data.query}</span>"
                   </p>
                 </div>
-                <DomainDetails domain={lookupQuery.data.data} />
+                <DomainDetails
+                  domain={lookupQuery.data.data}
+                  onRegister={handleDomainRegister}
+                  isRegistering={isRegistering}
+                  isRegisterDisabled={!isIrisReady}
+                />
               </div>
             ) : (
               <div className="space-y-4">
@@ -101,6 +144,24 @@ export default function Lookup() {
           </div>
         </section>
       )}
+
+      <RegistrationModal
+        domain={selectedDomain}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirmRegistration}
+        onVerify={handleVerifyPayment}
+        isProcessing={isRegistering}
+        transactionHash={transactionHash}
+        transactionStatus={transactionStatus}
+        statusText={statusText}
+        account={connectedAccount}
+        onAccountChange={setConnectedAccount}
+        provider={provider}
+        isIrisReady={isIrisReady}
+        irisStatus={irisStatus}
+        irisError={irisError}
+      />
 
       {/* Empty State */}
       {!lookupQuery.data && !lookupQuery.isFetching && (

@@ -1,12 +1,13 @@
 import { useState, useCallback } from "react";
 import { PAYMENT_ADDRESS, getFee } from "@/common";
-import { postRegister } from "@/api";
+import { postRegister, postVerify } from "@/api";
 import { Pkh, TxBuilder, SpendCondition, Digest, Note } from "@nockbox/iris-sdk/wasm";
 
 const STATUSES = {
   idle: "idle",
   validating: "validating",
   requesting: "requesting",
+  verifying: "verifying",
   building: "building",
   signing: "signing",
   sending: "sending",
@@ -27,6 +28,61 @@ export function useRegistrationFlow({ provider, rpcClient }) {
     setTransactionHash(undefined);
     setIsProcessing(false);
   }, []);
+
+  const verifyPayment = useCallback(
+    async (name, address) => {
+      setIsProcessing(true);
+      setTransactionHash(undefined);
+      setStatus(STATUSES.verifying);
+      setStatusText("Verifying payment...");
+
+      try {
+        if (!name || !/^[a-z0-9]+\.nock$/.test(name)) {
+          setStatus(STATUSES.failed);
+          setStatusText("Name must be alphanumeric lowercase and end with .nock");
+          return { ok: false };
+        }
+
+        if (!address) {
+          setStatus(STATUSES.failed);
+          setStatusText("Please connect your wallet first");
+          return { ok: false };
+        }
+
+        const res = await postVerify(name, address);
+        const registration = res?.registration;
+        const message = res?.message ?? "Verification complete";
+
+        if (!registration) {
+          setStatus(STATUSES.failed);
+          setStatusText(message);
+          return { ok: false };
+        }
+
+        if (registration.status === "registered") {
+          setStatus(STATUSES.confirmed);
+          setStatusText(message);
+          if (registration.txHash) setTransactionHash(registration.txHash);
+          return { ok: true, registration };
+        }
+
+        setStatus(STATUSES.pending);
+        setStatusText(message);
+        if (registration.txHash) setTransactionHash(registration.txHash);
+        return { ok: true, registration };
+      } catch (error) {
+        setStatus(STATUSES.failed);
+        setStatusText(
+          "Error verifying payment: " +
+            (error?.response?.data?.error ?? error.message ?? String(error))
+        );
+        return { ok: false, error };
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    []
+  );
 
   const registerDomain = useCallback(
     async (name, address) => {
@@ -63,11 +119,19 @@ export function useRegistrationFlow({ provider, rpcClient }) {
         setStatus(STATUSES.requesting);
         setStatusText("Creating registration request...");
         const response = await postRegister(name, address);
-        const key = response?.key ?? "";
-        const [regStatus, responseName] = key.split(":");
+        if (response?.address !== address) {
+          setStatus(STATUSES.failed);
+          setStatusText("Address mismatch");
+          return { ok: false };
+        }
+        if(response.name !== name) {
+          setStatus(STATUSES.failed);
+          setStatusText("Name mismatch");
+          return { ok: false };
+        }
 
-        if (regStatus === "pending") {
-          const fee = getFee(responseName);
+        if (response.status === "pending") {
+          const fee = getFee(name);
 
           // Fetch balance
           let balance;
@@ -147,7 +211,7 @@ export function useRegistrationFlow({ provider, rpcClient }) {
           return { ok: true, hash: nockchainTx.id.value, result };
         }
 
-        if (regStatus === "confirmed") {
+        if (response.status === "confirmed") {
           setStatus(STATUSES.confirmed);
           setStatusText("Domain registered successfully!");
           return { ok: true };
@@ -176,6 +240,7 @@ export function useRegistrationFlow({ provider, rpcClient }) {
     transactionHash,
     isProcessing,
     registerDomain,
+    verifyPayment,
     reset,
   };
 }
