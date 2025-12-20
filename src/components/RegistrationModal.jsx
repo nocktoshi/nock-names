@@ -42,7 +42,7 @@ export default function RegistrationModal({
   const status =
     domain.status ?? (domain.isAvailable ? "available" : "registered");
   const pendingOwner = status === "pending" ? domain.owner : null;
-  const effectiveAddress = status === "pending" ? pendingOwner : account;
+  const showWalletConnect = !account;
 
   const isConfirmDisabled =
     !isIrisReady ||
@@ -140,14 +140,26 @@ export default function RegistrationModal({
               </div>
               <Separator />
               <label className="text-sm">Address:</label>
-              {!effectiveAddress ? (
+              {status === "pending" && pendingOwner ? (
+                <div className="text-xs text-muted-foreground">
+                  Pending address:{" "}
+                  <span className="font-mono">
+                    {pendingOwner.slice(0, 6)}...{pendingOwner.slice(-4)}
+                  </span>
+                </div>
+              ) : null}
+              {status === "pending" && showWalletConnect ? (
+                <p className="text-xs text-muted-foreground">
+                  Connect your wallet to complete payment.
+                </p>
+              ) : showWalletConnect ? (
                 <WalletConnection
                   provider={provider}
                   onAccountChange={onAccountChange}
                 />
               ) : (
                 <div className="font-mono text-sm bg-background px-3 py-2 rounded border">
-                  {effectiveAddress.slice(0, 6)}...{effectiveAddress.slice(-4)}
+                  {account.slice(0, 6)}...{account.slice(-4)}
                 </div>
               )}
             </div>
@@ -186,34 +198,43 @@ export default function RegistrationModal({
                 {transactionStatus === "confirmed" ? "Close" : "Cancel"}
               </Button>
             )}
-            <Button
-              className="flex-1 web3-gradient hover:shadow-lg"
-              disabled={isConfirmDisabled}
-              onClick={async () => {
-                if (isConfirmDisabled) return;
-                setConfirmClickLocked(true);
-                try {
-                  await onConfirm(domain.name);
-                } finally {
-                  setConfirmClickLocked(false);
-                }
-              }}
-              data-testid="button-confirm-registration"
-            >
-              {isProcessing ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : transactionStatus === "confirmed" ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Registered
-                </>
-              ) : (
-                `Pay ${domain.price} NOCK`
-              )}
-            </Button>
+            {status === "pending" && showWalletConnect ? (
+              <div className="flex-1">
+                <WalletConnection
+                  provider={provider}
+                  onAccountChange={onAccountChange}
+                />
+              </div>
+            ) : (
+              <Button
+                className="flex-1 web3-gradient hover:shadow-lg"
+                disabled={isConfirmDisabled}
+                onClick={async () => {
+                  if (isConfirmDisabled) return;
+                  setConfirmClickLocked(true);
+                  try {
+                    await onConfirm(domain.name);
+                  } finally {
+                    setConfirmClickLocked(false);
+                  }
+                }}
+                data-testid="button-confirm-registration"
+              >
+                {isProcessing ? (
+                  <>
+                    <Clock className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : transactionStatus === "confirmed" ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Registered
+                  </>
+                ) : (
+                  `Pay ${domain.price} NOCK`
+                )}
+              </Button>
+            )}
           </div>
 
           {!isIrisReady && (
