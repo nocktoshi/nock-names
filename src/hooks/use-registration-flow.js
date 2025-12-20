@@ -159,7 +159,6 @@ export function useRegistrationFlow({ provider, rpcClient }) {
           // Build transaction
           const notes = balance.notes.map((n) => Note.fromProtobuf(n.note));
           notes.sort((a, b) => Number(b.assets) - Number(a.assets));
-          const note = notes[0];
           const amount = BigInt(fee * 65536);
           const feePerWord = BigInt(32768); // 0.5 NOCK per word
           const builder = new TxBuilder(feePerWord);
