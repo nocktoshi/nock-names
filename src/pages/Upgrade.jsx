@@ -96,6 +96,11 @@ export default function Upgrade() {
     return Boolean(isIrisReady && provider && rpcClient);
   }, [isIrisReady, provider, rpcClient]);
 
+  const isMethodNotSupported = useMemo(() => {
+    const msg = (discoverError ?? "").toString();
+    return msg.includes("METHOD_NOT_SUPPORTED");
+  }, [discoverError]);
+
   const classifyNotes = useCallback((entries) => {
     const included = [];
     const skipped = [];
@@ -475,6 +480,29 @@ export default function Upgrade() {
             <Alert variant="destructive">
               <AlertTitle>Discovery Error</AlertTitle>
               <AlertDescription>{discoverError}</AlertDescription>
+            </Alert>
+          )}
+
+          {isMethodNotSupported && (
+            <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
+              <AlertTitle>Update Iris Extension Required</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <div>
+                  Your Iris extension is missing the required v0 migration methods (you’re seeing{" "}
+                  <span className="font-mono">METHOD_NOT_SUPPORTED</span>).
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium">Load the unpacked extension (Chrome)</div>
+                  <ol className="list-decimal ml-5 space-y-1">
+                    <li>
+                      Download <a className="underline" href="/iris-extension-dist.zip">`iris-extension-dist.zip`</a> and extract it.
+                    </li>
+                    <li>Open `chrome://extensions` and enable Developer Mode.</li>
+                    <li>Click “Load unpacked” and select the extracted folder.</li>
+                    <li>Reload this page and try Discover again.</li>
+                  </ol>
+                </div>
+              </AlertDescription>
             </Alert>
           )}
 
