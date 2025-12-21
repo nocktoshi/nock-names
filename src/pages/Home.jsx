@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap, Search } from "lucide-react";
+import { Zap, Search, Wallet } from "lucide-react";
 import { Link } from "wouter";
 import DomainSearch from "@/components/DomainSearch";
 import DomainCard from "@/components/DomainCard";
@@ -7,6 +7,7 @@ import DomainSuggestions from "@/components/DomainSuggestions";
 import RecentlyRegistered from "@/components/RecentlyRegistered";
 import WalletConnection from "@/components/WalletConnection";
 import RegistrationModal from "@/components/RegistrationModal";
+import PricingCard from "@/components/PricingCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
@@ -106,6 +107,14 @@ export default function Home() {
                   Lookup
                 </Button>
               </Link>
+              {connectedAccount && (
+                <Link href="/my-nock">
+                  <Button variant="outline" className="gap-2">
+                    <Wallet className="h-4 w-4" />
+                    My .nock
+                  </Button>
+                </Link>
+              )}
               <ThemeToggle />
               <WalletConnection
                 provider={provider}
@@ -173,13 +182,6 @@ export default function Home() {
         </section>
       )}
 
-      {/* Recently Registered Section */}
-      <section className="py-8 px-4 no-default-hover-elevate">
-        <div className="container mx-auto">
-          <RecentlyRegistered limit={6} />
-        </div>
-      </section>
-
       {/* Empty State */}
       {searchResults.length === 0 && !isLoading && (
         <section className="py-8 px-4 no-default-hover-elevate">
@@ -188,25 +190,25 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("myname")}
+                  onClick={() => handleSearch("logan.nock")}
                 >
-                  <span className="font-mono text-sm">myname.nock</span>
+                  <span className="font-mono text-sm">logan.nock</span>
                 </div>
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("awesome")}
+                  onClick={() => handleSearch("xbox.nock")}
                 >
-                  <span className="font-mono text-sm">awesome.nock</span>
+                  <span className="font-mono text-sm">xbox.nock</span>
                 </div>
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("crypto")}
+                  onClick={() => handleSearch("fbi.nock")}
                 >
-                  <span className="font-mono text-sm">crypto.nock</span>
+                  <span className="font-mono text-sm">fbi.nock</span>
                 </div>
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("future")}
+                  onClick={() => handleSearch("future.nock")}
                 >
                   <span className="font-mono text-sm">future.nock</span>
                 </div>
@@ -215,6 +217,22 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Pricing + Activity */}
+      <section className="py-8 px-4 no-default-hover-elevate">
+        <div className="container mx-auto">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              <PricingCard className="h-full" />
+              <RecentlyRegistered
+                limit={6}
+                variant="sidebar"
+                className="h-full"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Registry Address Banner */}
       <div className="bg-muted/50 border-b border-border">

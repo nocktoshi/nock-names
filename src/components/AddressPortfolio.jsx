@@ -21,7 +21,7 @@ export default function AddressPortfolio({ address, domains, onRegister }) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="h-5 w-5" />
-            Address Portfolio
+            Summary
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -60,10 +60,10 @@ export default function AddressPortfolio({ address, domains, onRegister }) {
             </div>
             <div className="text-center p-4 bg-muted rounded-lg">
               <div className="text-2xl font-bold text-chart-3">
-                {totalValue.toFixed(3)} NOCK
+                {totalValue.toLocaleString()} NOCK
               </div>
               <div className="text-sm text-muted-foreground">
-                Portfolio Value
+                Value
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function AddressPortfolio({ address, domains, onRegister }) {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Globe className="h-5 w-5" />
-              Owned Domains
+              My .nock
               <Badge variant="secondary" className="ml-2">
                 {domains.length} {domains.length === 1 ? "domain" : "domains"}
               </Badge>

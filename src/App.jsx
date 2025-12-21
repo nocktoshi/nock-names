@@ -1,6 +1,7 @@
 import { Switch, Route } from "wouter";
 import Home from "@/pages/Home";
 import Lookup from "@/pages/Lookup";
+import MyNock from "@/pages/MyNock";
 import NotFound from "@/pages/not-found";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/lookup" component={Lookup} />
+      <Route path="/my-nock" component={MyNock} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>

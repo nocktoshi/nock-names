@@ -9,13 +9,29 @@ import { getFee } from "@/common";
 
 dayjs.extend(relativeTime);
 
-export default function RecentlyRegistered({ limit = 12 }) {
+export default function RecentlyRegistered({
+  limit = 12,
+  variant = "default",
+  className = "",
+}) {
   const { data: recentRegistrations = [], isFetching } =
     useRecentRegistrations(limit);
 
+  const gridClassName =
+    variant === "sidebar"
+      ? "grid grid-cols-1 gap-3"
+      : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4";
+
+  const panelBaseClassName =
+    variant === "sidebar"
+      ? "border-2 glassmorphism web3-glow"
+      : "max-w-6xl mx-auto";
+
   return (
-    <Card className="w-full max-w-6xl mx-auto">
-      <CardHeader>
+    <Card
+      className={`w-full ${panelBaseClassName} ${className}`.trim()}
+    >
+      <CardHeader className={variant === "sidebar" ? "pb-4" : ""}>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
           Recently Registered
@@ -35,7 +51,7 @@ export default function RecentlyRegistered({ limit = 12 }) {
         {isFetching && (
           <p className="text-sm text-muted-foreground mb-4">Loading...</p>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className={gridClassName}>
           {recentRegistrations.map((registration) => (
             <Card
               key={registration.id}
