@@ -101,6 +101,11 @@ export default function Upgrade() {
     return msg.includes("METHOD_NOT_SUPPORTED");
   }, [discoverError]);
 
+  const isNoVault = useMemo(() => {
+    const msg = (discoverError ?? "").toString();
+    return msg.includes("NO_VAULT");
+  }, [discoverError]);
+
   const classifyNotes = useCallback((entries) => {
     const included = [];
     const skipped = [];
@@ -500,6 +505,26 @@ export default function Upgrade() {
                     <li>Open `chrome://extensions` and enable Developer Mode.</li>
                     <li>Click “Load unpacked” and select the extracted folder.</li>
                     <li>Reload this page and try Discover again.</li>
+                  </ol>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isNoVault && (
+            <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
+              <AlertTitle>Iris Extension Not Initialized</AlertTitle>
+              <AlertDescription className="space-y-2">
+                <div>
+                  The unpacked Iris extension is installed, but it hasn’t been initialized yet (error{" "}
+                  <span className="font-mono">NO_VAULT</span>).
+                </div>
+                <div className="space-y-1">
+                  <div className="font-medium">Fix</div>
+                  <ol className="list-decimal ml-5 space-y-1">
+                    <li>Pin/open the Iris extension popup.</li>
+                    <li>Complete onboarding (create or import a wallet + set a password).</li>
+                    <li>After it shows an account, reload this page and click Discover again.</li>
                   </ol>
                 </div>
               </AlertDescription>
