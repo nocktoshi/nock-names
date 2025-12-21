@@ -190,25 +190,25 @@ export default function Home() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("myname")}
+                  onClick={() => handleSearch("logan.nock")}
                 >
                   <span className="font-mono text-sm">logan.nock</span>
                 </div>
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("awesome")}
+                  onClick={() => handleSearch("xbox.nock")}
                 >
                   <span className="font-mono text-sm">xbox.nock</span>
                 </div>
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("crypto")}
+                  onClick={() => handleSearch("fbi.nock")}
                 >
                   <span className="font-mono text-sm">fbi.nock</span>
                 </div>
                 <div
                   className="p-4 rounded-lg border hover-elevate cursor-pointer glassmorphism web3-glow-hover"
-                  onClick={() => handleSearch("future")}
+                  onClick={() => handleSearch("future.nock")}
                 >
                   <span className="font-mono text-sm">future.nock</span>
                 </div>
