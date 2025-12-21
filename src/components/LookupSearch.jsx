@@ -27,7 +27,7 @@ export default function LookupSearch({ onSearch, isLoading = false }) {
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="domain" data-testid="tab-domain">
             <Globe className="h-4 w-4 mr-2" />
-            Domain Name
+            .nock Name
           </TabsTrigger>
           <TabsTrigger value="address" data-testid="tab-address">
             <User className="h-4 w-4 mr-2" />
@@ -44,7 +44,7 @@ export default function LookupSearch({ onSearch, isLoading = false }) {
                 type="text"
                 placeholder={
                 searchType === "domain"
-                  ? "Enter domain name (e.g., johndoe)"
+                  ? "Enter .nock name (e.g., john.nock)"
                   : "Enter wallet address"
                 }
                 value={searchTerm}
@@ -66,19 +66,19 @@ export default function LookupSearch({ onSearch, isLoading = false }) {
           <div className="flex items-center justify-center mt-4 gap-2">
             <Badge variant="outline" className="text-xs">
               {searchType === 'domain' ? <Globe className="h-3 w-3 mr-1" /> : <User className="h-3 w-3 mr-1" />}
-              {searchType === 'domain' ? 'Domain Search' : 'Address Search'}
+              {searchType === 'domain' ? 'Global Search' : 'Address Search'}
             </Badge>
           </div>
 
           <TabsContent value="domain" className="mt-4">
             <p className="text-center text-sm text-muted-foreground">
-              Search for detailed information about any domain name
+              Search for detailed information about any .nock name
             </p>
           </TabsContent>
           
           <TabsContent value="address" className="mt-4">
             <p className="text-center text-sm text-muted-foreground">
-              Find all domains owned by a specific wallet address
+              Find all .nock names owned by a specific wallet address
             </p>
           </TabsContent>
         </div>

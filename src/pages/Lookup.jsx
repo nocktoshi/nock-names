@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, Wallet } from "lucide-react";
 import { Link } from "wouter";
 import LookupSearch from "@/components/LookupSearch";
 import DomainDetails from "@/components/DomainDetails";
@@ -86,13 +86,21 @@ export default function Lookup() {
               </Link>
               <div className="flex items-center gap-2">
                 <Search className="h-5 w-5 text-primary" />
-                <h1 className="text-xl font-bold">Domain Lookup</h1>
+                <h1 className="text-xl font-bold">Lookup</h1>
               </div>
               <Badge variant="secondary" className="text-xs cursor-pointer">
                 Beta
               </Badge>
             </div>
             <div className="flex items-center gap-3">
+              {connectedAccount && (
+                <Link href="/my-nock">
+                  <Button variant="outline" className="gap-2">
+                    <Wallet className="h-4 w-4" />
+                    .nock Names
+                  </Button>
+                </Link>
+              )}
               <ThemeToggle />
               <WalletConnection
                 provider={provider}
@@ -107,10 +115,10 @@ export default function Lookup() {
       <section className="py-12 px-4">
         <div className="container mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 web3-gradient-text">
-            Lookup Domain Information
+            Lookup
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Search for detailed domain information by name or explore all domains owned by a wallet address
+            Who dat .nock?
           </p>
           
           <LookupSearch onSearch={handleSearch} isLoading={lookupQuery.isFetching} />
@@ -186,7 +194,7 @@ export default function Lookup() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-6 rounded-lg bg-card border hover-elevate cursor-pointer" 
                      onClick={() => handleSearch('johndoe', 'domain')}>
-                  <div className="text-lg font-semibold mb-2">Try Domain Search</div>
+                  <div className="text-lg font-semibold mb-2">Try .nock Search</div>
                   <span className="font-mono text-sm text-primary">johndoe.nock</span>
                 </div>
                 <div className="p-6 rounded-lg bg-card border hover-elevate cursor-pointer" 

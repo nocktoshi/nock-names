@@ -36,6 +36,14 @@ export const useSuggestions = (name, enabled) =>
     staleTime: 60_000,
   });
 
+export const useAddressPortfolioQuery = (address) =>
+  useQuery({
+    queryKey: ["portfolio", address],
+    enabled: Boolean(address),
+    staleTime: 60_000,
+    queryFn: () => fetchAddressPortfolio(address),
+  });
+
 export const useLookupQuery = ({ query, type }) =>
   useQuery({
     queryKey: ["lookup", type, query],
