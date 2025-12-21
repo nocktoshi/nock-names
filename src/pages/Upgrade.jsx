@@ -90,7 +90,7 @@ export default function Upgrade() {
 
   const [includeDust, setIncludeDust] = useState(false);
   const [discoveredEntries, setDiscoveredEntries] = useState(null); // balance.notes entries (raw)
-  const [selectedEntryIndexes, setSelectedEntryIndexes] = useState(() => new Set()); // Set<number>
+  const [selectedEntryKeys, setSelectedEntryKeys] = useState(() => new Set()); // Set<string> (stable note identifiers)
 
   const canDiscover = useMemo(() => {
     return Boolean(isIrisReady && provider && rpcClient);
@@ -116,10 +116,13 @@ export default function Upgrade() {
       try {
         const assets = typeof note.assets === "bigint" ? note.assets : BigInt(note.assets);
         const originPage = typeof note.originPage === "bigint" ? note.originPage : BigInt(note.originPage);
+        const digest = note.hash();
+        const entryKey = digest.value;
         const name = note.name;
         const isDust = assets <= DUST_THRESHOLD_NICKS;
         const row = {
           entryIndex,
+          entryKey,
           nameFirst: name.first,
           nameLast: name.last,
           originPage: originPage.toString(),
@@ -128,6 +131,7 @@ export default function Upgrade() {
           assetsNock: formatNockApprox(assets),
           isDust,
         };
+        digest.free();
         name.free();
 
         // Skip dust notes.
@@ -165,16 +169,16 @@ export default function Upgrade() {
   // Default: select everything that would be migrated (based on includeDust setting).
   useEffect(() => {
     if (!notesPreview) {
-      setSelectedEntryIndexes(new Set());
+      setSelectedEntryKeys(new Set());
       return;
     }
-    setSelectedEntryIndexes(new Set(notesPreview.included.map((n) => n.entryIndex)));
+    setSelectedEntryKeys(new Set(notesPreview.included.map((n) => n.entryKey)));
   }, [notesPreview]);
 
   const selectedIncluded = useMemo(() => {
     if (!notesPreview) return [];
-    return notesPreview.included.filter((n) => selectedEntryIndexes.has(n.entryIndex));
-  }, [notesPreview, selectedEntryIndexes]);
+    return notesPreview.included.filter((n) => selectedEntryKeys.has(n.entryKey));
+  }, [notesPreview, selectedEntryKeys]);
 
   const selectedTotals = useMemo(() => {
     const sum = selectedIncluded.reduce((acc, r) => acc + BigInt(r.assetsNicks), 0n);
@@ -207,7 +211,7 @@ export default function Upgrade() {
     setV0Found(null);
     setDiscoveredEntries(null);
     setCandidates(null);
-    setSelectedEntryIndexes(new Set());
+    setSelectedEntryKeys(new Set());
 
     try {
       const status = await refreshV0Status();
@@ -280,6 +284,26 @@ export default function Upgrade() {
     setMigrateError(null);
     setTxId(null);
 
+    const notes = [];
+    const spendConditions = [];
+    let builder = null;
+    let recipientDigest = null;
+    let refundDigest = null;
+    let tx = null;
+    let rawTx = null;
+
+    const safeFree = (obj) => {
+      try {
+        // wasm-bindgen objects use `__wbg_ptr` for ownership. Some methods (e.g. `TxBuilder.simpleSpend`)
+        // consume objects via `__destroy_into_raw()`, which sets `__wbg_ptr = 0`. In that case, the object
+        // is already moved into WASM and must not be freed from JS.
+        if (obj && typeof obj.__wbg_ptr === "number" && obj.__wbg_ptr === 0) return;
+        obj?.free?.();
+      } catch {
+        // never let cleanup mask the original error
+      }
+    };
+
     try {
       const balance = await rpcClient.getBalanceByAddress(v0Found.addressB58);
       const entries = balance?.notes ?? [];
@@ -307,13 +331,19 @@ export default function Upgrade() {
         return SpendCondition.newPkh(Pkh.single(v0Found.pkhDigest));
       };
 
-      const notes = [];
-      const spendConditions = [];
-
+      const matchedSelectedKeys = new Set();
       for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
         const e = entries[entryIndex];
-        if (!selectedEntryIndexes.has(entryIndex)) continue;
         const note = Note.fromProtobuf(e.note);
+        const digest = note.hash();
+        const entryKey = digest.value;
+        digest.free();
+
+        if (!selectedEntryKeys.has(entryKey)) {
+          note.free();
+          continue;
+        }
+        matchedSelectedKeys.add(entryKey);
         const assets = typeof note.assets === "bigint" ? note.assets : BigInt(note.assets);
 
         if (!includeDust && assets <= DUST_THRESHOLD_NICKS) {
@@ -330,6 +360,16 @@ export default function Upgrade() {
         }
       }
 
+      const missingSelectedKeys = [];
+      for (const k of selectedEntryKeys) {
+        if (!matchedSelectedKeys.has(k)) missingSelectedKeys.push(k);
+      }
+      if (missingSelectedKeys.length > 0) {
+        throw new Error(
+          `Some selected notes are no longer available since discovery (spent/moved). Please re-discover and re-select. Missing: ${missingSelectedKeys.length}`
+        );
+      }
+
       if (!notes.length) {
         throw new Error(
           includeDust
@@ -338,9 +378,9 @@ export default function Upgrade() {
         );
       }
 
-      const builder = new TxBuilder(FEE_PER_WORD);
-      const recipientDigest = new Digest(v1Pkh);
-      const refundDigest = new Digest(v1Pkh);
+      builder = new TxBuilder(FEE_PER_WORD);
+      recipientDigest = new Digest(v1Pkh);
+      refundDigest = new Digest(v1Pkh);
 
       // NOTE: iris-rs TxBuilder rejects zero-gift simple spends (BuildError::ZeroGift),
       // so we use a 1-nick gift. Since `recipientDigest` == `refundDigest` (both v1 PKH),
@@ -356,8 +396,9 @@ export default function Upgrade() {
         null
       );
 
-      const tx = builder.build();
-      const rawTxProtobuf = tx.toRawTx().toProtobuf();
+      tx = builder.build();
+      rawTx = tx.toRawTx();
+      const rawTxProtobuf = rawTx.toProtobuf();
 
       // Convert wasm objects to protobuf JS objects (where applicable)
       const toProtobuf = (obj) =>
@@ -393,19 +434,21 @@ export default function Upgrade() {
 
       setMigrateStatus("done");
       setTxId("(submitted)");
-
-      // Cleanup
-      tx.free?.();
-      builder.free();
-      refundDigest.free();
-      recipientDigest.free();
-      for (const c of spendConditions) c.free();
-      for (const n of notes) n.free();
     } catch (e) {
       setMigrateError(e?.message ?? String(e));
       setMigrateStatus("error");
+    } finally {
+      // Cleanup (always run: success *and* failure). Note: ordering matters a bit:
+      // free derived tx/rawTx before freeing builder, then free per-note objects.
+      safeFree(rawTx);
+      safeFree(tx);
+      safeFree(builder);
+      safeFree(refundDigest);
+      safeFree(recipientDigest);
+      for (const c of spendConditions) safeFree(c);
+      for (const n of notes) safeFree(n);
     }
-  }, [canMigrate, provider, rpcClient, v0Found, v1Pkh, includeDust, selectedEntryIndexes]);
+  }, [canMigrate, provider, rpcClient, v0Found, v1Pkh, includeDust, selectedEntryKeys]);
 
   return (
     <div className="min-h-screen bg-background no-default-hover-elevate">
@@ -622,8 +665,8 @@ export default function Upgrade() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            setSelectedEntryIndexes(
-                              new Set(notesPreview.included.map((n) => n.entryIndex))
+                            setSelectedEntryKeys(
+                              new Set(notesPreview.included.map((n) => n.entryKey))
                             )
                           }
                         >
@@ -632,7 +675,7 @@ export default function Upgrade() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setSelectedEntryIndexes(new Set())}
+                          onClick={() => setSelectedEntryKeys(new Set())}
                         >
                           Select none
                         </Button>
@@ -661,18 +704,18 @@ export default function Upgrade() {
                         </TableHeader>
                         <TableBody>
                           {notesPreview.included.map((n) => (
-                            <TableRow key={n.entryIndex}>
+                          <TableRow key={n.entryKey}>
                               <TableCell>
                                 <input
                                   type="checkbox"
                                   className="h-4 w-4 rounded border border-input bg-background"
-                                  checked={selectedEntryIndexes.has(n.entryIndex)}
+                                checked={selectedEntryKeys.has(n.entryKey)}
                                   onChange={(e) => {
                                     const checked = e.target.checked;
-                                    setSelectedEntryIndexes((prev) => {
+                                  setSelectedEntryKeys((prev) => {
                                       const next = new Set(prev);
-                                      if (checked) next.add(n.entryIndex);
-                                      else next.delete(n.entryIndex);
+                                    if (checked) next.add(n.entryKey);
+                                    else next.delete(n.entryKey);
                                       return next;
                                     });
                                   }}
