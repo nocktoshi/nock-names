@@ -5,7 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Ignore build output + vendored/generated artifacts (e.g. vendored wasm pkg).
+  globalIgnores(['dist', 'vendor']),
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
