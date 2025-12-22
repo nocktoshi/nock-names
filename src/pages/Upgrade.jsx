@@ -113,12 +113,14 @@ export default function Upgrade() {
     for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
       const e = entries[entryIndex];
       const note = Note.fromProtobuf(e.note);
+      let digest = null;
+      let name = null;
       try {
         const assets = typeof note.assets === "bigint" ? note.assets : BigInt(note.assets);
         const originPage = typeof note.originPage === "bigint" ? note.originPage : BigInt(note.originPage);
-        const digest = note.hash();
+        digest = note.hash();
         const entryKey = digest.value;
-        const name = note.name;
+        name = note.name;
         const isDust = assets <= DUST_THRESHOLD_NICKS;
         const row = {
           entryIndex,
@@ -131,8 +133,6 @@ export default function Upgrade() {
           assetsNock: formatNockApprox(assets),
           isDust,
         };
-        digest.free();
-        name.free();
 
         // Skip dust notes.
         if (isDust && !includeDust) {
@@ -142,6 +142,17 @@ export default function Upgrade() {
 
         included.push(row);
       } finally {
+        // Prevent WASM leaks if anything throws between allocation and manual cleanup.
+        try {
+          name?.free?.();
+        } catch {
+          // ignore
+        }
+        try {
+          digest?.free?.();
+        } catch {
+          // ignore
+        }
         note.free();
       }
     }
@@ -249,9 +260,17 @@ export default function Upgrade() {
         if (noteCount > 0) {
           const totalNicks = balance.notes.reduce((acc, e) => {
             const n = Note.fromProtobuf(e.note);
-            const v = BigInt(n.assets);
-            n.free();
-            return acc + v;
+            try {
+              const v = BigInt(n.assets);
+              return acc + v;
+            } finally {
+              // Ensure WASM resources are always released, even if BigInt(...) throws.
+              try {
+                n.free();
+              } catch {
+                // never let cleanup mask the original error
+              }
+            }
           }, 0n);
 
           found = {
@@ -334,29 +353,47 @@ export default function Upgrade() {
       const matchedSelectedKeys = new Set();
       for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
         const e = entries[entryIndex];
-        const note = Note.fromProtobuf(e.note);
-        const digest = note.hash();
-        const entryKey = digest.value;
-        digest.free();
+        let note = null;
+        let entryKey = null;
+        try {
+          note = Note.fromProtobuf(e.note);
+          let digest = null;
+          try {
+            digest = note.hash();
+            entryKey = digest.value;
+          } finally {
+            safeFree(digest);
+          }
+        } catch (err) {
+          safeFree(note);
+          throw err;
+        }
 
         if (!selectedEntryKeys.has(entryKey)) {
-          note.free();
+          safeFree(note);
           continue;
         }
         matchedSelectedKeys.add(entryKey);
         const assets = typeof note.assets === "bigint" ? note.assets : BigInt(note.assets);
 
         if (!includeDust && assets <= DUST_THRESHOLD_NICKS) {
-          note.free();
+          safeFree(note);
           continue;
         }
 
         try {
-          const cond = trySpendConditionFromEntry(e);
-          notes.push(note);
-          spendConditions.push(cond);
+          let cond = null;
+          try {
+            cond = trySpendConditionFromEntry(e);
+            notes.push(note);
+            spendConditions.push(cond);
+            note = null; // ownership transferred to `notes`
+            cond = null; // ownership transferred to `spendConditions`
+          } finally {
+            safeFree(cond);
+          }
         } catch {
-          note.free();
+          safeFree(note);
         }
       }
 
