@@ -20,6 +20,7 @@ export default function DomainSearch({ onSearch, isLoading = false }) {
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             data-testid="input-domain-search"
+            id="domain-search-input"
             type="text"
             placeholder="Search for a .nock name..."
             value={searchTerm}

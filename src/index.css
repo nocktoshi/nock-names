@@ -1,6 +1,39 @@
 @config "../tailwind.config.js";
 @import "tailwindcss";
 
+/* Local font: Berkeley Mono */
+@font-face {
+  font-family: "Berkeley Mono";
+  src: url("./assets/BerkeleyMono-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Berkeley Mono";
+  src: url("./assets/BerkeleyMono-Oblique.ttf") format("truetype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Berkeley Mono";
+  src: url("./assets/BerkeleyMono-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Berkeley Mono";
+  src: url("./assets/BerkeleyMono-Bold-Oblique.ttf") format("truetype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0, 0, 0, 0.1);
@@ -75,9 +108,9 @@
   --chart-4: 280 75% 55%;
   --chart-5: 340 75% 55%;
 
-  --font-sans: Inter, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-sans: "Berkeley Mono", Inter, sans-serif;
+  --font-serif: "Berkeley Mono", Inter, serif;
+  --font-mono: "Berkeley Mono", Inter, monospace;
   --radius: 0.5rem; /* 8px */
   --shadow-2xs: 0px 1px 2px 0px hsl(220 13% 9% / 0.05);
   --shadow-xs: 0px 1px 3px 0px hsl(220 13% 9% / 0.1);
