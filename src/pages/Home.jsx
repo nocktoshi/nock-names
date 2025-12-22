@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap, Search, Wallet } from "lucide-react";
+import { Zap, Search, Wallet, ArrowLeftRight } from "lucide-react";
 import { Link } from "wouter";
 import DomainSearch from "@/components/DomainSearch";
 import DomainCard from "@/components/DomainCard";
@@ -107,6 +107,13 @@ export default function Home() {
                   Lookup
                 </Button>
               </Link>
+              <Link href="/upgrade">
+                <Button variant="outline" className="gap-2">
+                  <ArrowLeftRight className="h-4 w-4" />
+                  Upgrade v0 → v1
+                </Button>
+              </Link>
+
               {connectedAccount && (
                 <Link href="/my-nock">
                   <Button variant="outline" className="gap-2">
