@@ -7,14 +7,14 @@ import AddressPortfolio from "@/components/AddressPortfolio";
 import RegistrationModal from "@/components/RegistrationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useIris } from "@/hooks/use-iris";
+import { useRose } from "@nockchain/sdk";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useAddressPortfolioQuery } from "@/hooks/use-queries";
 
 export default function MyNock() {
-  const iris = useIris();
-  const { provider, status: irisStatus, error: irisError, isReady: isIrisReady } =
-    iris;
+  const rose = useRose();
+  const { provider, status: roseStatus, error: roseError, isReady: isRoseReady } =
+    rose;
 
   const {
     status: transactionStatus,
@@ -24,7 +24,7 @@ export default function MyNock() {
     registerDomain,
     verifyPayment,
     reset: resetRegistration,
-  } = useRegistrationFlow(iris);
+  } = useRegistrationFlow(rose);
 
   const [connectedAccount, setConnectedAccount] = useState(null);
   const [selectedDomain, setSelectedDomain] = useState(null);
@@ -34,19 +34,19 @@ export default function MyNock() {
   const domains = portfolioQuery.data || [];
 
   const handleDomainRegister = (domain) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     resetRegistration();
     setSelectedDomain(domain);
     setIsModalOpen(true);
   };
 
   const handleConfirmRegistration = async (name) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     await registerDomain(name, connectedAccount);
   };
 
   const handleVerifyPayment = async (name, addressOverride) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     await verifyPayment(name, addressOverride ?? connectedAccount);
   };
 
@@ -131,9 +131,9 @@ export default function MyNock() {
         account={connectedAccount}
         onAccountChange={setConnectedAccount}
         provider={provider}
-        isIrisReady={isIrisReady}
-        irisStatus={irisStatus}
-        irisError={irisError}
+        isRoseReady={isRoseReady}
+        roseStatus={roseStatus}
+        roseError={roseError}
       />
     </div>
   );

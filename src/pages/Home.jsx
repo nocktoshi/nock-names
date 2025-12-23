@@ -11,18 +11,18 @@ import PricingCard from "@/components/PricingCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
-import { useIris } from "@/hooks/use-iris";
+import { useRose } from "@nockchain/sdk";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const iris = useIris();
+  const rose = useRose();
   const {
     provider,
-    status: irisStatus,
-    error: irisError,
-    isReady: isIrisReady,
-  } = iris;
+    status: roseStatus,
+    error: roseError,
+    isReady: isRoseReady,
+  } = rose;
   const [selectedDomain, setSelectedDomain] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -34,7 +34,7 @@ export default function Home() {
     registerDomain,
     verifyPayment,
     reset: resetRegistration,
-  } = useRegistrationFlow(iris);
+  } = useRegistrationFlow(rose);
   const [searchTerm, setSearchTerm] = useState("");
   const [connectedAccount, setConnectedAccount] = useState(null);
 
@@ -55,20 +55,20 @@ export default function Home() {
   };
 
   const handleRegister = (domain) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     resetRegistration();
     setSelectedDomain(domain);
     setIsModalOpen(true);
   };
 
   const handleConfirmRegistration = async (name) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     console.log(`Confirming registration for: ${name}`);
     await registerDomain(name, connectedAccount);
   };
 
   const handleVerifyPayment = async (name, addressOverride) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     await verifyPayment(name, addressOverride ?? connectedAccount);
   };
 
@@ -165,7 +165,7 @@ export default function Home() {
                     domain={domain}
                     onRegister={handleRegister}
                     isRegistering={isRegistering}
-                    isRegisterDisabled={!isIrisReady}
+                    isRegisterDisabled={!isRoseReady}
                   />
                 ))}
               </div>
@@ -183,7 +183,7 @@ export default function Home() {
               suggestions={suggestions}
               onRegister={handleRegister}
               isRegistering={isRegistering}
-              isRegisterDisabled={!isIrisReady}
+              isRegisterDisabled={!isRoseReady}
             />
           </div>
         </section>
@@ -282,9 +282,9 @@ export default function Home() {
         account={connectedAccount}
         onAccountChange={setConnectedAccount}
         provider={provider}
-        isIrisReady={isIrisReady}
-        irisStatus={irisStatus}
-        irisError={irisError}
+        isRoseReady={isRoseReady}
+        roseStatus={roseStatus}
+        roseError={roseError}
       />
     </div>
   );

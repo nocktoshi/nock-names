@@ -9,13 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { useLookupQuery } from "@/hooks/use-queries";
 import RegistrationModal from "@/components/RegistrationModal";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
-import { useIris } from "@/hooks/use-iris";
+import { useRose } from "@nockchain/sdk";
 import ThemeToggle from "@/components/ThemeToggle";
 import WalletConnection from "@/components/WalletConnection";
 
 export default function Lookup() {
-  const iris = useIris();
-  const { provider, status: irisStatus, error: irisError, isReady: isIrisReady } = iris;
+  const rose = useRose();
+  const { provider, status: roseStatus, error: roseError, isReady: isRoseReady } = rose;
   const {
     status: transactionStatus,
     statusText,
@@ -24,7 +24,7 @@ export default function Lookup() {
     registerDomain,
     verifyPayment,
     reset: resetRegistration,
-  } = useRegistrationFlow(iris);
+  } = useRegistrationFlow(rose);
 
   const [params, setParams] = useState({ query: null, type: "domain" });
   const [error, setError] = useState("");
@@ -46,19 +46,19 @@ export default function Lookup() {
 
   const handleDomainRegister = (domain) => {
     console.log(`Registering domain from lookup: ${domain.name}`);
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     resetRegistration();
     setSelectedDomain(domain);
     setIsModalOpen(true);
   };
 
   const handleConfirmRegistration = async (name) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     await registerDomain(name, connectedAccount);
   };
 
   const handleVerifyPayment = async (name, addressOverride) => {
-    if (!isIrisReady) return;
+    if (!isRoseReady) return;
     await verifyPayment(name, addressOverride ?? connectedAccount);
   };
 
@@ -146,7 +146,7 @@ export default function Lookup() {
                   domain={lookupQuery.data.data}
                   onRegister={handleDomainRegister}
                   isRegistering={isRegistering}
-                  isRegisterDisabled={!isIrisReady}
+                  isRegisterDisabled={!isRoseReady}
                 />
               </div>
             ) : (
@@ -181,9 +181,9 @@ export default function Lookup() {
         account={connectedAccount}
         onAccountChange={setConnectedAccount}
         provider={provider}
-        isIrisReady={isIrisReady}
-        irisStatus={irisStatus}
-        irisError={irisError}
+        isRoseReady={isRoseReady}
+        roseStatus={roseStatus}
+        roseError={roseError}
       />
 
       {/* Empty State */}

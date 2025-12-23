@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 
-import { useIris } from "@/hooks/use-iris";
+import { useRose } from "@nockchain/sdk";
 import {
   Digest,
   Note,
@@ -18,7 +18,7 @@ import {
   SpendCondition,
   TxBuilder,
   hashPublicKey,
-} from "@nockbox/iris-wasm";
+} from "@nockchain/rose-wasm";
 
 const FEE_PER_WORD = 32768n; // 0.5 NOCK per word (matches existing site usage)
 const NOCK_TO_NICKS = 65536;
@@ -71,8 +71,8 @@ function base58Decode(str) {
 }
 
 export default function Upgrade() {
-  const iris = useIris();
-  const { provider, rpcClient, isReady: isIrisReady } = iris;
+  const rose = useRose();
+  const { provider, rpcClient, isReady: isRoseReady } = rose;
 
   const [v1Pkh, setV1Pkh] = useState(null);
 
@@ -93,8 +93,8 @@ export default function Upgrade() {
   const [selectedEntryKeys, setSelectedEntryKeys] = useState(() => new Set()); // Set<string> (stable note identifiers)
 
   const canDiscover = useMemo(() => {
-    return Boolean(isIrisReady && provider && rpcClient);
-  }, [isIrisReady, provider, rpcClient]);
+    return Boolean(isRoseReady && provider && rpcClient);
+  }, [isRoseReady, provider, rpcClient]);
 
   const isMethodNotSupported = useMemo(() => {
     const msg = (discoverError ?? "").toString();
@@ -200,12 +200,12 @@ export default function Upgrade() {
     return Boolean(
       v1Pkh &&
         v0Found &&
-        isIrisReady &&
+        isRoseReady &&
         provider &&
         rpcClient &&
         selectedIncluded.length > 0
     );
-  }, [v1Pkh, v0Found, isIrisReady, provider, rpcClient, selectedIncluded.length]);
+  }, [v1Pkh, v0Found, isRoseReady, provider, rpcClient, selectedIncluded.length]);
 
   const refreshV0Status = useCallback(async () => {
     if (!provider) return;
@@ -419,7 +419,7 @@ export default function Upgrade() {
       recipientDigest = new Digest(v1Pkh);
       refundDigest = new Digest(v1Pkh);
 
-      // NOTE: iris-rs TxBuilder rejects zero-gift simple spends (BuildError::ZeroGift),
+      // NOTE: rose-rs TxBuilder rejects zero-gift simple spends (BuildError::ZeroGift),
       // so we use a 1-nick gift. Since `recipientDigest` == `refundDigest` (both v1 PKH),
       // the outputs effectively consolidate to v1 anyway (minus fees).
       builder.simpleSpend(
