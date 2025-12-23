@@ -25,9 +25,9 @@ export default function RegistrationModal({
   account,
   onAccountChange,
   provider,
-  irisStatus,
-  irisError,
-  isIrisReady = true,
+  roseStatus,
+  roseError,
+  isRoseReady = true,
 }) {
   const [confirmClickLocked, setConfirmClickLocked] = useState(false);
 
@@ -45,7 +45,7 @@ export default function RegistrationModal({
   const showWalletConnect = !account;
 
   const isConfirmDisabled =
-    !isIrisReady ||
+    !isRoseReady ||
     confirmClickLocked ||
     isProcessing ||
     transactionStatus === "pending" ||
@@ -178,7 +178,7 @@ export default function RegistrationModal({
                   await onVerify?.(domain.name, pendingOwner ?? null)
                 }
                 disabled={
-                  !isIrisReady ||
+                  !isRoseReady ||
                   isProcessing ||
                   !pendingOwner ||
                   !onVerify
@@ -237,11 +237,11 @@ export default function RegistrationModal({
             )}
           </div>
 
-          {!isIrisReady && (
+          {!isRoseReady && (
             <p className="text-xs text-muted-foreground">
-              {irisStatus === "error"
-                ? `Iris initialization failed: ${irisError?.message ?? String(irisError)}`
-                : "Initializing Iris…"}
+              {roseStatus === "error"
+                ? `Rose initialization failed: ${roseError?.message ?? String(roseError)}`
+                : "Initializing Rose…"}
             </p>
           )}
         </div>

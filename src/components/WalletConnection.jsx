@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { NockchainProvider } from "@nockbox/iris-sdk";
+import { NockchainProvider } from "@nockchain/sdk";
 
 const WalletConnection = ({ provider, onAccountChange }) => {
   const [account, setAccount] = useState(null);

@@ -52,7 +52,7 @@ function buildWasmMock() {
 }
 
 // The hook imports these directly; mock them so tests don't try to load real WASM.
-vi.mock("@nockbox/iris-wasm", () => buildWasmMock());
+vi.mock("@nockchain/rose-wasm", () => buildWasmMock());
 
 describe("useRegistrationFlow", () => {
   const provider = {
