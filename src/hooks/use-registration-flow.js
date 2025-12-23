@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { PAYMENT_ADDRESS, getFee } from "@/common";
 import { postRegister, postVerify } from "@/api";
-import { Pkh, TxBuilder, SpendCondition, Digest, Note } from "@nockbox/iris-wasm";
+import { Pkh, TxBuilder, SpendCondition, Digest, Note } from "@nockchain/rose-wasm";
 
 const STATUSES = {
   idle: "idle",
@@ -179,8 +179,9 @@ export function useRegistrationFlow({ provider, rpcClient }) {
             null,
             refundDigest,
             false,
-            // TODO: Hold on memo until iris is ready
-            //`nockname=${name}` //memo
+            // Memo: pass a JS string. rose-wasm will encode it into the standard
+            // CLI-compatible memo noun (list of bytes), which wallets/extensions can decode.
+            `nockname=${name}`
           );
 
           const nockchainTx = builder.build();
