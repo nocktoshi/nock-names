@@ -79,7 +79,7 @@ export default function Upgrade() {
   const [discoverStatus, setDiscoverStatus] = useState("idle");
   const [discoverError, setDiscoverError] = useState(null);
 
-  const [v0Status, setV0Status] = useState(null); // { hasV0Seedphrase: boolean }
+  const [hasV0Seed, setHasV0Seed] = useState(null); // { hasV0Seedphrase: boolean }
   const [candidates, setCandidates] = useState(null); // [{label,addressB58,pkhDigest}]
   const [v0Found, setV0Found] = useState(null); // { label, addressB58, noteCount, totalNicks }
   const [v0Address, setV0Address] = useState("");
@@ -210,9 +210,9 @@ export default function Upgrade() {
   const refreshV0Status = useCallback(async () => {
     if (!provider) return;
     const { ok, hasV0Mnemonic } = await provider.request({ method: MIGRATE_V0_GET_STATUS });
-    const status = ok && hasV0Mnemonic;
-    setV0Status(status);
-    return status;
+    const hasV0Seed = ok && hasV0Mnemonic;
+    setHasV0Seed(hasV0Seed);
+    return hasV0Seed;
   }, [provider]);
 
   const discover = useCallback(async () => {
@@ -226,10 +226,10 @@ export default function Upgrade() {
     setSelectedEntryKeys(new Set());
 
     try {
-      const hasV0 = await refreshV0Status();
-        if (!hasV0) {
+      const hasV0Seed = await refreshV0Status();
+        if (!hasV0Seed) {
         setDiscoverError(
-          "No v0 seedphrase stored in Iris yet. Open the Iris extension → Settings → Upgrade v0 → v1 and store your v0 seedphrase there."
+          "No v0 seedphrase stored in Rose Wallet yet. Open the Rose Wallet and store your v0 seedphrase there."
         );
         setDiscoverStatus("done");
         return;
@@ -289,7 +289,7 @@ export default function Upgrade() {
 
       setDiscoverStatus("done");
       if (!found) {
-        setDiscoverError("No notes found for derived v0 address candidates. Double-check your legacy wallet in Iris.");
+        setDiscoverError("No notes found for derived v0 address candidates. Double-check your legacy address in Rose Wallet.");
       }
     } catch (e) {
       setDiscoverError(e?.message ?? String(e));
@@ -593,17 +593,17 @@ export default function Upgrade() {
 
           {isNoVault && (
             <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
-              <AlertTitle>Iris Extension Not Initialized</AlertTitle>
+              <AlertTitle>Extension Not Initialized</AlertTitle>
               <AlertDescription className="space-y-2">
                 <div>
-                  The unpacked Iris extension is installed, but it hasn’t been initialized yet (error{" "}
+                  The unpacked Rose extension is installed, but it hasn’t been initialized yet (error{" "}
                   <span className="font-mono">NO_VAULT</span>).
                 </div>
                 <div className="space-y-1">
                   <div className="font-medium">Fix</div>
                   <ol className="list-decimal ml-5 space-y-1">
-                    <li>Pin/open the Iris extension popup.</li>
-                    <li>Complete onboarding (create or import a wallet + set a password).</li>
+                    <li>Pin/open the Rose extension popup.</li>
+                    <li>Complete onboarding (click "I have a v0 wallet") If you already onboarded click </li>
                     <li>After it shows an account, reload this page and click Discover again.</li>
                   </ol>
                 </div>
@@ -611,20 +611,20 @@ export default function Upgrade() {
             </Alert>
           )}
 
-          {v0Status && (
+          {hasV0Seed && (
             <Alert>
-              <AlertTitle>Iris v0 seedphrase status</AlertTitle>
+              <AlertTitle>Rose v0 seedphrase status</AlertTitle>
               <AlertDescription>
-                {v0Status.hasV0Seedphrase
-                  ? "Stored in Iris (website never sees it)."
-                  : "Not stored. Open Iris extension → Settings → Upgrade v0 → v1."}
+                {hasV0Seed
+                  ? "✅ Stored in Rose Wallet (this website has no access to it)."
+                  : "❌ Not stored. Open Rose Wallet and store your v0 seedphrase there."}
               </AlertDescription>
             </Alert>
           )}
 
           {candidates && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Derived v0 candidates (from Iris)</h2>
+              <h2 className="text-lg font-semibold">Derived v0 candidates (from Rose Wallet)</h2>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -648,15 +648,15 @@ export default function Upgrade() {
 
           {v0Found && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Discovered v0 Address</h2>
+              <h2 className="text-lg font-semibold">Discovered v0 Notes</h2>
               <Alert>
                 <AlertTitle>Notes found at {v0Found.label} address:</AlertTitle>
                 <AlertDescription className="font-mono text-sm break-all">
                   {v0Found.addressB58}
                   <br />
-                  Total Notes: {v0Found.noteCount}
+                  ✅ Total Notes: {v0Found.noteCount}
                   <br />
-                  Total Nicks: {v0Found.totalNicks.toString()} (approx. {formatNockApprox(v0Found.totalNicks)} NOCK)
+                  ✅ Total Nicks: {v0Found.totalNicks.toString()} (approx. {formatNockApprox(v0Found.totalNicks)} NOCK)
                 </AlertDescription>
               </Alert>
 
