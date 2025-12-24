@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { NockchainProvider } from "@nockchain/sdk";
-import Rose32 from "@/assets/Rose32.png";
+import rose32 from "@/assets/rose32.png";
 
 const WalletConnection = ({ provider, onAccountChange }) => {
   const [account, setAccount] = useState(null);
@@ -117,7 +117,7 @@ const WalletConnection = ({ provider, onAccountChange }) => {
             className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
           >
             <img
-              src={Rose32}
+              src={rose32}
               alt="Rose Connect"
               className="w-4 h-4 flex-shrink-0"
             />
