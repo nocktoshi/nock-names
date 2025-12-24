@@ -209,9 +209,10 @@ export default function Upgrade() {
 
   const refreshV0Status = useCallback(async () => {
     if (!provider) return;
-    const res = await provider.request({ method: MIGRATE_V0_GET_STATUS });
-    setV0Status(res);
-    return res;
+    const { ok, hasV0Mnemonic } = await provider.request({ method: MIGRATE_V0_GET_STATUS });
+    const status = ok && hasV0Mnemonic;
+    setV0Status(status);
+    return status;
   }, [provider]);
 
   const discover = useCallback(async () => {
@@ -225,8 +226,8 @@ export default function Upgrade() {
     setSelectedEntryKeys(new Set());
 
     try {
-      const status = await refreshV0Status();
-      if (!status?.hasV0Seedphrase) {
+      const hasV0 = await refreshV0Status();
+        if (!hasV0) {
         setDiscoverError(
           "No v0 seedphrase stored in Iris yet. Open the Iris extension → Settings → Upgrade v0 → v1 and store your v0 seedphrase there."
         );
@@ -516,9 +517,8 @@ export default function Upgrade() {
           <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
             <AlertTitle>Experimental</AlertTitle>
             <AlertDescription>
-              This upgrade flow is experimental. You must use the <span className="font-medium">latest Iris extension</span>{" "}
-              that supports <span className="font-mono">v0</span> signing (the{" "}
-              <span className="font-mono">{MIGRATE_V0_SIGN_RAW_TX}</span> method), otherwise migration will fail.
+              This upgrade flow is experimental. You must use the <span className="font-medium">Rose Wallet</span>{" "}
+              as Iris Wallet does not support v0 migrations yet. You must also have your v0 seedphrase stored in Rose Wallet.
             </AlertDescription>
           </Alert>
 
@@ -532,7 +532,7 @@ export default function Upgrade() {
             ) : (
               <div className="flex flex-col gap-3">
                 <div className="text-muted-foreground text-sm">
-                  Connect Iris to set the destination v1 address.
+                  Connect Rose Wallet to set the destination v1 address.
                 </div>
                 <div className="flex">
                   <WalletConnection provider={provider} onAccountChange={setV1Pkh} />
@@ -552,7 +552,7 @@ export default function Upgrade() {
                 />
               </div>
               <div className="text-xs text-muted-foreground">
-                Note: migration signing still requires the Iris extension to have your v0 seedphrase stored.
+                Note: migration signing still requires the Rose Wallet to have your v0 seedphrase stored.
               </div>
             </div>
           </div>
@@ -570,7 +570,7 @@ export default function Upgrade() {
 
           {isMethodNotSupported && (
             <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
-              <AlertTitle>Update Iris Extension Required</AlertTitle>
+              <AlertTitle>No Support for v0 Migration</AlertTitle>
               <AlertDescription className="space-y-2">
                 <div>
                   Your Iris extension is missing the required v0 migration methods (you’re seeing{" "}
@@ -580,7 +580,7 @@ export default function Upgrade() {
                   <div className="font-medium">Load the unpacked extension (Chrome)</div>
                   <ol className="list-decimal ml-5 space-y-1">
                     <li>
-                      Download <a className="underline" href="/iris-extension-dist.zip">`iris-extension-dist.zip`</a> and extract it.
+                      Download <a className="underline" href="/rose-extension-dist.zip">`rose-extension-dist.zip`</a> and extract it.
                     </li>
                     <li>Open `chrome://extensions` and enable Developer Mode.</li>
                     <li>Click “Load unpacked” and select the extracted folder.</li>
