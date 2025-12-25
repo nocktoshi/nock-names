@@ -10,7 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 
-import { useRose } from "@nockchain/sdk";
+import { useWallet } from "@/hooks/use-wallet";
 import {
   Digest,
   Note,
@@ -71,15 +71,16 @@ function base58Decode(str) {
 }
 
 export default function Upgrade() {
-  const rose = useRose();
-  const { provider, rpcClient, isReady: isRoseReady } = rose;
+  const wallet = useWallet();
+  const { provider, rpcClient, isReady: isRoseReady } = wallet;
 
   const [v1Pkh, setV1Pkh] = useState(null);
 
   const [discoverStatus, setDiscoverStatus] = useState("idle");
   const [discoverError, setDiscoverError] = useState(null);
+  const [walletType, setWalletType] = useState(null); // 'rose' | 'iris' | null
 
-  const [v0Status, setV0Status] = useState(null); // { hasV0Seedphrase: boolean }
+  const [hasV0Seed, setHasV0Seed] = useState(null); // { hasV0Seedphrase: boolean }
   const [candidates, setCandidates] = useState(null); // [{label,addressB58,pkhDigest}]
   const [v0Found, setV0Found] = useState(null); // { label, addressB58, noteCount, totalNicks }
   const [v0Address, setV0Address] = useState("");
@@ -105,6 +106,30 @@ export default function Upgrade() {
     const msg = (discoverError ?? "").toString();
     return msg.includes("NO_VAULT");
   }, [discoverError]);
+
+  // Detect wallet type when provider changes
+  useEffect(() => {
+    if (!provider) {
+      setWalletType(null);
+      return;
+    }
+
+    // Check for Rose (new SDK) using EIP-6963
+    if (typeof window !== 'undefined') {
+      // Import dynamically to avoid build issues
+      import("@nockchain/sdk").then(({ NockchainProvider }) => {
+        if (NockchainProvider.isInstalled()) {
+          setWalletType('rose');
+        } else {
+          // Assume Iris if provider exists but Rose not detected
+          setWalletType('iris');
+        }
+      }).catch(() => {
+        // Fallback if SDK import fails
+        setWalletType('iris');
+      });
+    }
+  }, [provider]);
 
   const classifyNotes = useCallback((entries) => {
     const included = [];
@@ -209,9 +234,10 @@ export default function Upgrade() {
 
   const refreshV0Status = useCallback(async () => {
     if (!provider) return;
-    const res = await provider.request({ method: MIGRATE_V0_GET_STATUS });
-    setV0Status(res);
-    return res;
+    const { ok, hasV0Mnemonic } = await provider.request({ method: MIGRATE_V0_GET_STATUS });
+    const hasV0Seed = ok && hasV0Mnemonic;
+    setHasV0Seed(hasV0Seed);
+    return hasV0Seed;
   }, [provider]);
 
   const discover = useCallback(async () => {
@@ -225,10 +251,10 @@ export default function Upgrade() {
     setSelectedEntryKeys(new Set());
 
     try {
-      const status = await refreshV0Status();
-      if (!status?.hasV0Seedphrase) {
+      const hasV0Seed = await refreshV0Status();
+        if (!hasV0Seed) {
         setDiscoverError(
-          "No v0 seedphrase stored in Iris yet. Open the Iris extension → Settings → Upgrade v0 → v1 and store your v0 seedphrase there."
+          "No v0 seedphrase stored in Rose Wallet yet. Open the Rose Wallet and store your v0 seedphrase there."
         );
         setDiscoverStatus("done");
         return;
@@ -288,7 +314,7 @@ export default function Upgrade() {
 
       setDiscoverStatus("done");
       if (!found) {
-        setDiscoverError("No notes found for derived v0 address candidates. Double-check your legacy wallet in Iris.");
+        setDiscoverError("No notes found for derived v0 address candidates. Double-check your legacy address in Rose Wallet.");
       }
     } catch (e) {
       setDiscoverError(e?.message ?? String(e));
@@ -516,9 +542,12 @@ export default function Upgrade() {
           <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
             <AlertTitle>Experimental</AlertTitle>
             <AlertDescription>
-              This upgrade flow is experimental. You must use the <span className="font-medium">latest Iris extension</span>{" "}
-              that supports <span className="font-mono">v0</span> signing (the{" "}
-              <span className="font-mono">{MIGRATE_V0_SIGN_RAW_TX}</span> method), otherwise migration will fail.
+              This upgrade flow is experimental. You must use the <span className="font-medium">Rose Wallet</span> and have your v0 seedphrase stored in Rose Wallet.
+              {walletType === 'iris' && (
+                <span className="block mt-2 font-medium text-yellow-800 dark:text-yellow-200">
+                  ⚠️ Iris does not support the required v0 signing methods. Please install Rose Wallet for v0 migration support.
+                </span>
+              )}
             </AlertDescription>
           </Alert>
 
@@ -532,7 +561,7 @@ export default function Upgrade() {
             ) : (
               <div className="flex flex-col gap-3">
                 <div className="text-muted-foreground text-sm">
-                  Connect Iris to set the destination v1 address.
+                  Connect {walletType === 'iris' ? 'your wallet' : 'Rose Wallet'} to set the destination v1 address.
                 </div>
                 <div className="flex">
                   <WalletConnection provider={provider} onAccountChange={setV1Pkh} />
@@ -552,7 +581,7 @@ export default function Upgrade() {
                 />
               </div>
               <div className="text-xs text-muted-foreground">
-                Note: migration signing still requires the Iris extension to have your v0 seedphrase stored.
+                Note: migration signing still requires the Rose Wallet to have your v0 seedphrase stored.
               </div>
             </div>
           </div>
@@ -570,40 +599,62 @@ export default function Upgrade() {
 
           {isMethodNotSupported && (
             <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
-              <AlertTitle>Update Iris Extension Required</AlertTitle>
+              <AlertTitle>No Support for v0 Migration</AlertTitle>
               <AlertDescription className="space-y-2">
                 <div>
-                  Your Iris extension is missing the required v0 migration methods (you’re seeing{" "}
+                  Your {walletType === 'iris' ? 'Iris' : 'current'} wallet is missing the required v0 migration methods (error:{" "}
                   <span className="font-mono">METHOD_NOT_SUPPORTED</span>).
                 </div>
-                <div className="space-y-1">
-                  <div className="font-medium">Load the unpacked extension (Chrome)</div>
-                  <ol className="list-decimal ml-5 space-y-1">
-                    <li>
-                      Download <a className="underline" href="/iris-extension-dist.zip">`iris-extension-dist.zip`</a> and extract it.
-                    </li>
-                    <li>Open `chrome://extensions` and enable Developer Mode.</li>
-                    <li>Click “Load unpacked” and select the extracted folder.</li>
-                    <li>Reload this page and try Discover again.</li>
-                  </ol>
-                </div>
+                {walletType === 'iris' ? (
+                  <div className="space-y-1">
+                    <div className="font-medium">Solution: Upgrade to Rose Wallet</div>
+                    <p className="text-sm">
+                      Legacy Iris Wallet does not support v0 migrations. Please install Rose Wallet:
+                    </p>
+                    <ol className="list-decimal ml-5 space-y-1 text-sm">
+                      <li>
+                        Download Rose Wallet from{" "}
+                        <a className="underline font-medium" href="/rose-extension-dist.zip">
+                          rose-extension-dist.zip
+                        </a>
+                      </li>
+                      <li>Extract the zip file</li>
+                      <li>Open <code className="bg-black/10 px-1 rounded">chrome://extensions</code> and enable Developer Mode</li>
+                      <li>Click "Load unpacked" and select the extracted folder</li>
+                      <li>Complete Rose Wallet onboarding (import your wallet)</li>
+                      <li>Reload this page and connect with Rose</li>
+                    </ol>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="font-medium">Load the unpacked Rose extension (Chrome)</div>
+                    <ol className="list-decimal ml-5 space-y-1">
+                      <li>
+                        Download <a className="underline" href="/rose-extension-dist.zip">`rose-extension-dist.zip`</a> and extract it.
+                      </li>
+                      <li>Open `chrome://extensions` and enable Developer Mode.</li>
+                      <li>Click "Load unpacked" and select the extracted folder.</li>
+                      <li>Reload this page and try Discover again.</li>
+                    </ol>
+                  </div>
+                )}
               </AlertDescription>
             </Alert>
           )}
 
           {isNoVault && (
             <Alert className="border-yellow-300/60 bg-yellow-50 text-yellow-900 dark:bg-yellow-950/30 dark:text-yellow-100">
-              <AlertTitle>Iris Extension Not Initialized</AlertTitle>
+              <AlertTitle>Extension Not Initialized</AlertTitle>
               <AlertDescription className="space-y-2">
                 <div>
-                  The unpacked Iris extension is installed, but it hasn’t been initialized yet (error{" "}
+                  The unpacked Rose extension is installed, but it hasn’t been initialized yet (error{" "}
                   <span className="font-mono">NO_VAULT</span>).
                 </div>
                 <div className="space-y-1">
                   <div className="font-medium">Fix</div>
                   <ol className="list-decimal ml-5 space-y-1">
-                    <li>Pin/open the Iris extension popup.</li>
-                    <li>Complete onboarding (create or import a wallet + set a password).</li>
+                    <li>Pin/open the Rose extension popup.</li>
+                    <li>Complete onboarding (click "I have a v0 wallet") If you already onboarded click </li>
                     <li>After it shows an account, reload this page and click Discover again.</li>
                   </ol>
                 </div>
@@ -611,20 +662,22 @@ export default function Upgrade() {
             </Alert>
           )}
 
-          {v0Status && (
+          {hasV0Seed && (
             <Alert>
-              <AlertTitle>Iris v0 seedphrase status</AlertTitle>
+              <AlertTitle>{walletType === 'iris' ? 'Iris' : 'Rose'} v0 seedphrase status</AlertTitle>
               <AlertDescription>
-                {v0Status.hasV0Seedphrase
-                  ? "Stored in Iris (website never sees it)."
-                  : "Not stored. Open Iris extension → Settings → Upgrade v0 → v1."}
+                {hasV0Seed
+                  ? `✅ Stored in ${walletType === 'iris' ? 'Iris' : 'Rose'} Wallet (this website has no access to it).`
+                  : `❌ Not stored. Open ${walletType === 'iris' ? 'Iris' : 'Rose'} Wallet and store your v0 seedphrase there.`}
               </AlertDescription>
             </Alert>
           )}
 
           {candidates && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Derived v0 candidates (from Iris)</h2>
+              <h2 className="text-lg font-semibold">
+                Derived v0 candidates (from {walletType === 'iris' ? 'Iris' : 'Rose'} Wallet)
+              </h2>
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -648,15 +701,15 @@ export default function Upgrade() {
 
           {v0Found && (
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Discovered v0 Address</h2>
+              <h2 className="text-lg font-semibold">Discovered v0 Notes</h2>
               <Alert>
                 <AlertTitle>Notes found at {v0Found.label} address:</AlertTitle>
                 <AlertDescription className="font-mono text-sm break-all">
                   {v0Found.addressB58}
                   <br />
-                  Total Notes: {v0Found.noteCount}
+                  ✅ Total Notes: {v0Found.noteCount}
                   <br />
-                  Total Nicks: {v0Found.totalNicks.toString()} (approx. {formatNockApprox(v0Found.totalNicks)} NOCK)
+                  ✅ Total Nicks: {v0Found.totalNicks.toString()} (approx. {formatNockApprox(v0Found.totalNicks)} NOCK)
                 </AlertDescription>
               </Alert>
 

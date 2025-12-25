@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { useLookupQuery } from "@/hooks/use-queries";
 import RegistrationModal from "@/components/RegistrationModal";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
-import { useRose } from "@nockchain/sdk";
+import { useWallet } from "@/hooks/use-wallet";
 import ThemeToggle from "@/components/ThemeToggle";
 import WalletConnection from "@/components/WalletConnection";
 
 export default function Lookup() {
-  const rose = useRose();
+  const rose = useWallet();
   const { provider, status: roseStatus, error: roseError, isReady: isRoseReady } = rose;
   const {
     status: transactionStatus,
