@@ -7,14 +7,14 @@ import AddressPortfolio from "@/components/AddressPortfolio";
 import RegistrationModal from "@/components/RegistrationModal";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useRose } from "@nockchain/sdk";
+import { useWallet } from "@/hooks/use-wallet";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useAddressPortfolioQuery } from "@/hooks/use-queries";
 
 export default function MyNock() {
-  const rose = useRose();
+  const wallet = useWallet();
   const { provider, status: roseStatus, error: roseError, isReady: isRoseReady } =
-    rose;
+    wallet;
 
   const {
     status: transactionStatus,
@@ -24,7 +24,7 @@ export default function MyNock() {
     registerDomain,
     verifyPayment,
     reset: resetRegistration,
-  } = useRegistrationFlow(rose);
+  } = useRegistrationFlow(wallet);
 
   const [connectedAccount, setConnectedAccount] = useState(null);
   const [selectedDomain, setSelectedDomain] = useState(null);

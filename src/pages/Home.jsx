@@ -11,12 +11,12 @@ import PricingCard from "@/components/PricingCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
 import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
-import { useRose } from "@nockchain/sdk";
+import { useWallet } from "@/hooks/use-wallet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  const rose = useRose();
+  const rose = useWallet();
   const {
     provider,
     status: roseStatus,
