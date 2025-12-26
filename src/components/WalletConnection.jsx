@@ -95,11 +95,11 @@ const WalletConnection = ({ provider, onAccountChange }) => {
       <div className="flex flex-col gap-2">
         <Button variant="outline" asChild>
           <a
-            href="https://www.npmjs.com/package/@nockchain/rose"
+            href="/rose-extension-dist.zip"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Install Rose Wallet (Recommended)
+            Install Rose Wallet
           </a>
         </Button>
         <Button variant="ghost" size="sm" asChild>
@@ -109,7 +109,7 @@ const WalletConnection = ({ provider, onAccountChange }) => {
             rel="noopener noreferrer"
             className="text-xs text-muted-foreground"
           >
-            or Install Iris Wallet (Legacy)
+            or Install Iris Wallet
           </a>
         </Button>
       </div>
