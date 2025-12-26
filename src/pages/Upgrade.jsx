@@ -409,14 +409,21 @@ export default function Upgrade() {
 
       // Simple approach: assume all v0 notes use PKH spend conditions (like registration flow)
       // SpendCondition.newPkh consumes the Pkh, so create a fresh one per note.
+      // hashPublicKey returns a Digest object, extract .value for the string representation
+      const pkhValue = typeof v0Found.pkhDigest === 'string' 
+        ? v0Found.pkhDigest 
+        : v0Found.pkhDigest?.value ?? v0Found.pkhDigest;
       for (let i = 0; i < notes.length; i++) {
-        spendConditions.push(SpendCondition.newPkh(Pkh.single(v0Found.pkhDigest)));
+        spendConditions.push(SpendCondition.newPkh(Pkh.single(pkhValue)));
       }
 
       builder = new TxBuilder(FEE_PER_WORD);
       recipientDigest = new Digest(v1Pkh);
       refundDigest = new Digest(v1Pkh);
-
+      console.log('v0Found:', v0Found);
+      console.log('pkhValue:', pkhValue);
+      console.log('notes count:', notes.length);
+      console.log('v1Pkh:', v1Pkh);
       // NOTE: rose-rs TxBuilder rejects zero-gift simple spends (BuildError::ZeroGift),
       // so we use a 1-nick gift. Since `recipientDigest` == `refundDigest` (both v1 PKH),
       // the outputs effectively consolidate to v1 anyway (minus fees).
