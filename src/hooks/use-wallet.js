@@ -57,7 +57,14 @@ function detectWalletType() {
 async function getProviderOnce() {
   const g = globalThis;
   const existing = g[PROVIDER_KEY];
-  if (existing instanceof NockchainProvider) return existing;
+  
+  // Check if we already have a cached provider (Rose or Iris wrapper)
+  if (existing) {
+    // Rose provider
+    if (existing instanceof NockchainProvider) return existing;
+    // Iris wrapper (has _isIrisWrapper marker)
+    if (existing._isIrisWrapper) return existing;
+  }
 
   // Check for Rose wallet first (preferred) - quick EIP-6963 check
   const roseFound = await NockchainProvider.waitForInstallation(500);
@@ -88,7 +95,10 @@ function createIrisProviderWrapper(nockchain) {
   let accounts = [];
 
   const wrapper = {
-    _accounts: accounts,
+    // Marker to identify this as an Iris wrapper for caching
+    _isIrisWrapper: true,
+    _nockchain: nockchain,
+    
     get accounts() { return [...accounts]; },
     get isConnected() { return accounts.length > 0; },
     
@@ -114,12 +124,22 @@ function createIrisProviderWrapper(nockchain) {
         eventListeners.set(event, new Set());
       }
       eventListeners.get(event).add(listener);
+      
+      // Also register on the underlying nockchain if it supports events
+      if (nockchain.on) {
+        nockchain.on(event, listener);
+      }
     },
     
     off(event, listener) {
       const listeners = eventListeners.get(event);
       if (listeners) {
         listeners.delete(listener);
+      }
+      
+      // Also unregister from underlying nockchain
+      if (nockchain.off) {
+        nockchain.off(event, listener);
       }
     },
     

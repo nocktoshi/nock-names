@@ -354,28 +354,7 @@ export default function Upgrade() {
       const entries = balance?.notes ?? [];
       if (!entries.length) throw new Error("No notes found at v0 address (already migrated?)");
 
-      const trySpendConditionFromEntry = (entry) => {
-        // Depending on RPC shape, lock/spend condition might be present separately.
-        // Try a few common field names first; fall back to a PKH-based condition for the v0 derived address.
-        const candidates = [
-          entry?.spendCondition,
-          entry?.spend_condition,
-          entry?.lock,
-          entry?.lockRoot,
-        ].filter(Boolean);
-
-        for (const c of candidates) {
-          try {
-            return SpendCondition.fromProtobuf(c);
-          } catch {
-            // keep trying
-          }
-        }
-
-        // Most v0 derived addresses correspond to a simple PKH lock.
-        return SpendCondition.newPkh(Pkh.single(v0Found.pkhDigest));
-      };
-
+      // Build notes list from selected entries
       const matchedSelectedKeys = new Set();
       for (let entryIndex = 0; entryIndex < entries.length; entryIndex++) {
         const e = entries[entryIndex];
@@ -407,20 +386,7 @@ export default function Upgrade() {
           continue;
         }
 
-        try {
-          let cond = null;
-          try {
-            cond = trySpendConditionFromEntry(e);
-            notes.push(note);
-            spendConditions.push(cond);
-            note = null; // ownership transferred to `notes`
-            cond = null; // ownership transferred to `spendConditions`
-          } finally {
-            safeFree(cond);
-          }
-        } catch {
-          safeFree(note);
-        }
+        notes.push(note);
       }
 
       const missingSelectedKeys = [];
@@ -436,9 +402,15 @@ export default function Upgrade() {
       if (!notes.length) {
         throw new Error(
           includeDust
-            ? "No notes selected/usable. (All selected notes failed lock parsing.)"
-            : "No spendable notes selected. (All selected notes were skipped as dust or failed lock parsing.)"
+            ? "No notes selected/usable."
+            : "No spendable notes selected. (All selected notes were skipped as dust.)"
         );
+      }
+
+      // Simple approach: assume all v0 notes use PKH spend conditions (like registration flow)
+      // SpendCondition.newPkh consumes the Pkh, so create a fresh one per note.
+      for (let i = 0; i < notes.length; i++) {
+        spendConditions.push(SpendCondition.newPkh(Pkh.single(v0Found.pkhDigest)));
       }
 
       builder = new TxBuilder(FEE_PER_WORD);
@@ -448,15 +420,17 @@ export default function Upgrade() {
       // NOTE: rose-rs TxBuilder rejects zero-gift simple spends (BuildError::ZeroGift),
       // so we use a 1-nick gift. Since `recipientDigest` == `refundDigest` (both v1 PKH),
       // the outputs effectively consolidate to v1 anyway (minus fees).
+      // NOTE: Use undefined (not null) for optional WASM params - null can cause
+      // "null pointer passed to rust" errors in wasm-bindgen.
       builder.simpleSpend(
         notes,
         spendConditions,
         recipientDigest,
         1n,
-        null,
+        undefined,
         refundDigest,
         false,
-        null
+        undefined
       );
 
       tx = builder.build();
