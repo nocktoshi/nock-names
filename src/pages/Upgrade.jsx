@@ -590,32 +590,28 @@ export default function Upgrade() {
                   <div className="space-y-1">
                     <div className="font-medium">Solution: Upgrade to Rose Wallet</div>
                     <p className="text-sm">
-                      Legacy Iris Wallet does not support v0 migrations. Please install Rose Wallet:
+                      Iris Wallet does not support v0 migration. Please install Rose Wallet:
                     </p>
                     <ol className="list-decimal ml-5 space-y-1 text-sm">
                       <li>
-                        Download Rose Wallet from{" "}
-                        <a className="underline font-medium" href="/rose-extension-dist.zip">
-                          rose-extension-dist.zip
+                        Download Rose Wallet Chrome Extension from{" "}
+                        <a className="underline font-medium" href="https://chromewebstore.google.com/detail/rose-wallet/ekhabldjdcgfjkmnhohhcbchgdecmpmb">
+                          Rose Wallet
                         </a>
                       </li>
-                      <li>Extract the zip file</li>
-                      <li>Open <code className="bg-black/10 px-1 rounded">chrome://extensions</code> and enable Developer Mode</li>
-                      <li>Click "Load unpacked" and select the extracted folder</li>
-                      <li>Complete Rose Wallet onboarding (import your wallet)</li>
-                      <li>Reload this page and connect with Rose</li>
+                      <li>Complete Rose Wallet onboarding (import your v0 seedphrase)</li>
+                      <li>Reload this page and connect with Rose Wallet</li>
                     </ol>
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <div className="font-medium">Load the unpacked Rose extension (Chrome)</div>
+                    <div className="font-medium">Load the Rose Wallet Chrome Extension</div>
                     <ol className="list-decimal ml-5 space-y-1">
                       <li>
-                        Download <a className="underline" href="/rose-extension-dist.zip">`rose-extension-dist.zip`</a> and extract it.
+                        Download <a className="underline" href="https://chromewebstore.google.com/detail/rose-wallet/ekhabldjdcgfjkmnhohhcbchgdecmpmb">`Rose Wallet`</a>.
                       </li>
-                      <li>Open `chrome://extensions` and enable Developer Mode.</li>
-                      <li>Click "Load unpacked" and select the extracted folder.</li>
-                      <li>Reload this page and try Discover again.</li>
+                      <li>Complete Rose Wallet onboarding (import your v0 seedphrase)</li>
+                      <li>Reload this page and connect with Rose Wallet</li>
                     </ol>
                   </div>
                 )}

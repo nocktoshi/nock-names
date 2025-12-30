@@ -95,7 +95,7 @@ const WalletConnection = ({ provider, onAccountChange }) => {
       <div className="flex flex-col gap-2">
         <Button variant="outline" asChild>
           <a
-            href="/rose-extension-dist.zip"
+            href="https://chromewebstore.google.com/detail/rose-wallet/ekhabldjdcgfjkmnhohhcbchgdecmpmb"
             target="_blank"
             rel="noopener noreferrer"
           >
