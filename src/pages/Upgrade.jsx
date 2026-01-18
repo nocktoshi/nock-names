@@ -479,7 +479,12 @@ export default function Upgrade() {
       setMigrateStatus("done");
       setTxId("(submitted)");
     } catch (e) {
-      setMigrateError(e?.message ?? String(e));
+      console.error('Migration error:', e);
+      console.error('Error type:', typeof e);
+      console.error('Error keys:', e ? Object.keys(e) : 'null');
+      console.error('Error JSON:', JSON.stringify(e, null, 2));
+      const msg = e?.message ?? e?.error ?? (typeof e === 'string' ? e : JSON.stringify(e));
+      setMigrateError(msg);
       setMigrateStatus("error");
     } finally {
       // Cleanup (always run: success *and* failure). Note: ordering matters a bit:
