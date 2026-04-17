@@ -3,6 +3,7 @@ import Home from "@/pages/Home";
 import Lookup from "@/pages/Lookup";
 import MyNock from "@/pages/MyNock";
 import Upgrade from "@/pages/Upgrade";
+import Grant from "@/pages/Grant";
 import NotFound from "@/pages/not-found";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/lookup" component={Lookup} />
       <Route path="/my-nock" component={MyNock} />
       <Route path="/upgrade" component={Upgrade} />
+      <Route path="/grant" component={Grant} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
