@@ -25,7 +25,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
 
 const milestones = [
   {
@@ -347,7 +346,12 @@ export default function Grant() {
                       <span>Funding allocation</span>
                       <span>{milestone.percentage}%</span>
                     </div>
-                    <Progress value={milestone.percentage} className="h-2" />
+                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                      <div
+                        className="h-full web3-gradient transition-all"
+                        style={{ width: `${milestone.percentage}%` }}
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
