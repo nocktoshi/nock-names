@@ -113,9 +113,20 @@ function createIrisProviderWrapper(nockchain) {
     },
     
     async signRawTx(params) {
+      // Iris expects protobuf JS objects, not wasm-bindgen objects.
+      // Convert any wasm object (has `toProtobuf()`) before sending.
+      const toProtobuf = (obj) =>
+        obj && typeof obj.toProtobuf === 'function' ? obj.toProtobuf() : obj;
+
+      const protobufParams = {
+        rawTx: toProtobuf(params.rawTx),
+        notes: (params.notes ?? []).map(toProtobuf),
+        spendConditions: (params.spendConditions ?? []).map(toProtobuf),
+      };
+
       return this.request({
         method: 'nock_signRawTx',
-        params: [params],
+        params: [protobufParams],
       });
     },
     
