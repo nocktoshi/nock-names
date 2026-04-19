@@ -181,7 +181,7 @@ export function useRegistrationFlow({ provider, rpcClient }) {
             undefined,
             refundDigest,
             false,
-            undefined
+            //undefined
           );
 
           const nockchainTx = builder.build();
