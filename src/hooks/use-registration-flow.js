@@ -171,17 +171,17 @@ export function useRegistrationFlow({ provider, rpcClient }) {
             SpendCondition.newPkh(Pkh.single(address))
           );
 
+          // NOTE: Use undefined (not null) for optional WASM params - null can cause
+          // "null pointer passed to rust" errors in wasm-bindgen.
           builder.simpleSpend(
             notes,
             spendConditions,
             recipientDigest,
             amount,
-            null,
+            undefined,
             refundDigest,
             false,
-            // Memo: pass a JS string. rose-wasm will encode it into the standard
-            // CLI-compatible memo noun (list of bytes), which wallets/extensions can decode.
-            `nockname=${name}`
+            undefined
           );
 
           const nockchainTx = builder.build();
