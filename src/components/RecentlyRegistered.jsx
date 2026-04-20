@@ -74,7 +74,10 @@ export default function RecentlyRegistered({
                       Payment Pending
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="text-xs">
+                    <Badge
+                      variant="default"
+                      className="text-xs bg-chart-2 text-primary-foreground"
+                    >
                       Registered
                     </Badge>
                   )}

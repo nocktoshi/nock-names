@@ -1,4 +1,4 @@
-import { Check, X, Clock, ExternalLink } from "lucide-react";
+import { Check, Clock, ExternalLink } from "lucide-react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +32,16 @@ export default function DomainCard({
           className="bg-yellow-500 text-black border-transparent no-default-hover-elevate"
         >
           <Clock className="h-3 w-3 mr-1" />
-          Payment Pending
+          Pending
         </Badge>
       );
     }
     return (
-      <Badge variant="destructive">
-        <X className="h-3 w-3 mr-1" />
+      <Badge
+        variant="default"
+        className="bg-chart-2 text-primary-foreground hover-elevate"
+      >
+        <Check className="h-3 w-3 mr-1" />
         Registered
       </Badge>
     );

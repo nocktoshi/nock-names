@@ -13,11 +13,18 @@ export default function DomainDetails({
   const status = domain.status ?? (domain.isAvailable ? "available" : "registered");
   const isAvailable = status === "available";
   const isPending = status === "pending";
+  const isRegistered = status === "registered";
   const canRegister = typeof onRegister === "function";
   const statusBadgeClassName = isPending
     ? "bg-yellow-500 text-black border-transparent no-default-hover-elevate"
-    : undefined;
-  const statusLabel = isPending ? "Payment Pending" : status;
+    : isRegistered
+      ? "bg-chart-2 text-primary-foreground border-transparent"
+      : undefined;
+  const statusLabel = isPending
+    ? "Payment Pending"
+    : isRegistered
+      ? "Registered"
+      : status;
 
   const formatDate = (date) => {
     if (!date) return "N/A";

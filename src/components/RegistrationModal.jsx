@@ -83,17 +83,17 @@ export default function RegistrationModal({
 
     return (
       <div className="flex items-center gap-3 p-4 rounded-lg bg-muted">
-      <div className={`p-2 rounded-full ${config.color}`}>
-        <Icon className="h-4 w-4 text-white" />
-      </div>
-      <div className="flex-1">
-        <p className="font-medium">{config.text}</p>
-        {transactionHash && (
-        <p className="text-sm text-muted-foreground font-mono">
-          {transactionHash.slice(0, 6)}...{transactionHash.slice(-4)}
-        </p>
-        )}
-      </div>
+        <div className={`p-2 rounded-full ${config.color}`}>
+          <Icon className="h-4 w-4 text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="font-medium">{config.text}</p>
+          {transactionHash && (
+            <p className="text-sm text-muted-foreground font-mono">
+              {transactionHash.slice(0, 6)}...{transactionHash.slice(-4)}
+            </p>
+          )}
+        </div>
       </div>
     );
   };
@@ -116,10 +116,12 @@ export default function RegistrationModal({
                 variant="secondary"
                 className="bg-yellow-500 text-black border-transparent no-default-hover-elevate"
               >
-                Payment Pending
+                Pending
               </Badge>
             ) : (
-              <Badge variant="destructive">Registered</Badge>
+              <Badge variant="default" className="bg-chart-2">
+                Registered
+              </Badge>
             )}
           </DialogTitle>
           <DialogDescription>Register this .nock name</DialogDescription>
@@ -127,134 +129,136 @@ export default function RegistrationModal({
 
         <div className="space-y-6">
           {/* Domain Info */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-mono font-semibold">
-                {domain.name}
-              </span>
-            </div>
-
-            {/* Cost Breakdown */}
-            <div className="space-y-3 p-4 rounded-lg bg-muted">
-              <div className="flex justify-between">
-                <span className="text-sm">Domain price</span>
-                <span className="font-mono">{domain.price} NOCK</span>
-              </div>
-              <Separator />
-              <label className="text-sm">Address:</label>
-              {status === "pending" && pendingOwner ? (
-                <div className="text-xs text-muted-foreground">
-                  Pending address:{" "}
-                  <span className="font-mono">
-                    {pendingOwner.slice(0, 6)}...{pendingOwner.slice(-4)}
+          {!isPending && (
+            <>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-mono font-semibold">
+                    {domain.name}
                   </span>
                 </div>
-              ) : null}
-              {status === "pending" && showWalletConnect ? (
-                <p className="text-xs text-muted-foreground">
-                  Connect your wallet to complete payment.
-                </p>
-              ) : showWalletConnect ? (
-                <WalletConnection
-                  provider={provider}
-                  onAccountChange={onAccountChange}
-                />
-              ) : (
-                <div className="font-mono text-sm bg-background px-3 py-2 rounded border">
-                  {account.slice(0, 6)}...{account.slice(-4)}
+
+                <div className="space-y-3 p-4 rounded-lg bg-muted">
+                  <div className="flex justify-between">
+                    <span className="text-sm">Domain price</span>
+                    <span className="font-mono">{domain.price} NOCK</span>
+                  </div>
+                  <Separator />
+                  <label className="text-sm">Address:</label>
+                  {status === "pending" && pendingOwner ? (
+                    <div className="text-xs text-muted-foreground">
+                      Pending address:{" "}
+                      <span className="font-mono">
+                        {pendingOwner.slice(0, 6)}...{pendingOwner.slice(-4)}
+                      </span>
+                    </div>
+                  ) : null}
+                  {status === "pending" && showWalletConnect ? (
+                    <p className="text-xs text-muted-foreground">
+                      Connect your wallet to complete payment.
+                    </p>
+                  ) : showWalletConnect ? (
+                    <WalletConnection
+                      provider={provider}
+                      onAccountChange={onAccountChange}
+                    />
+                  ) : (
+                    <div className="font-mono text-sm bg-background px-3 py-2 rounded border">
+                      {account.slice(0, 6)}...{account.slice(-4)}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-
-            {/* Payment instructions (pending) */}
-            {isPending && (
-              <PendingPaymentAlert
-                price={domain.price}
-                createdAt={domain.registeredAt ?? domain.timestamp}
-              />
-            )}
-
-            {/* Transaction Status */}
-            {getStatusDisplay()}
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3">
-            {status === "pending" ? (
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={async () =>
-                  await onVerify?.(domain.name, pendingOwner ?? null)
-                }
-                disabled={
-                  !isRoseReady ||
-                  isProcessing ||
-                  !pendingOwner ||
-                  !onVerify
-                }
-                data-testid="button-verify-payment"
-              >
-                Verify Payment
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={onClose}
-                disabled={isProcessing && transactionStatus === "pending"}
-                data-testid="button-cancel-registration"
-              >
-                {transactionStatus === "confirmed" ? "Close" : "Cancel"}
-              </Button>
-            )}
-            {status === "pending" && showWalletConnect ? (
-              <div className="flex-1">
-                <WalletConnection
-                  provider={provider}
-                  onAccountChange={onAccountChange}
-                />
               </div>
-            ) : (
-              <Button
-                className="flex-1 web3-gradient hover:shadow-lg"
-                disabled={isConfirmDisabled}
-                onClick={async () => {
-                  if (isConfirmDisabled) return;
-                  setConfirmClickLocked(true);
-                  try {
-                    await onConfirm(domain.name);
-                  } finally {
-                    setConfirmClickLocked(false);
-                  }
-                }}
-                data-testid="button-confirm-registration"
-              >
-                {isProcessing ? (
-                  <>
-                    <Clock className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : transactionStatus === "confirmed" ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Registered
-                  </>
-                ) : (
-                  `Pay ${domain.price} NOCK`
-                )}
-              </Button>
-            )}
-          </div>
+            </>
+          )}
+          {/* Payment instructions (pending) */}
+          {isPending && (
+            <PendingPaymentAlert
+              price={domain.price}
+              createdAt={domain.registeredAt ?? domain.timestamp}
+            />
+          )}
 
-          {!isRoseReady && (
-            <p className="text-xs text-muted-foreground">
-              {roseStatus === "error"
-                ? `Rose initialization failed: ${roseError?.message ?? String(roseError)}`
-                : "Initializing Rose…"}
-            </p>
+          {/* Transaction Status */}
+          {getStatusDisplay()}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          {status === "pending" ? (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={async () =>
+                await onVerify?.(domain.name, pendingOwner ?? null)
+              }
+              disabled={
+                !isRoseReady ||
+                isProcessing ||
+                !pendingOwner ||
+                !onVerify
+              }
+              data-testid="button-verify-payment"
+            >
+              Verify Payment
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={onClose}
+              disabled={isProcessing && transactionStatus === "pending"}
+              data-testid="button-cancel-registration"
+            >
+              {transactionStatus === "confirmed" ? "Close" : "Cancel"}
+            </Button>
+          )}
+          {status === "pending" && showWalletConnect ? (
+            <div className="flex-1">
+              <WalletConnection
+                provider={provider}
+                onAccountChange={onAccountChange}
+              />
+            </div>
+          ) : (
+            <Button
+              className="flex-1 web3-gradient hover:shadow-lg"
+              disabled={isConfirmDisabled}
+              onClick={async () => {
+                if (isConfirmDisabled) return;
+                setConfirmClickLocked(true);
+                try {
+                  await onConfirm(domain.name);
+                } finally {
+                  setConfirmClickLocked(false);
+                }
+              }}
+              data-testid="button-confirm-registration"
+            >
+              {isProcessing ? (
+                <>
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : transactionStatus === "confirmed" ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  Registered
+                </>
+              ) : (
+                `Pay ${domain.price} NOCK`
+              )}
+            </Button>
           )}
         </div>
+
+        {!isRoseReady && (
+          <p className="text-xs text-muted-foreground">
+            {roseStatus === "error"
+              ? `Rose initialization failed: ${roseError?.message ?? String(roseError)}`
+              : "Initializing Rose…"}
+          </p>
+        )}
       </DialogContent>
     </Dialog>
   );
