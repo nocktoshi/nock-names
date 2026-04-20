@@ -43,7 +43,10 @@ function buildWasmMock() {
     Note: {
       fromProtobuf: (note) => ({
         value: note,
-        assets: BigInt(1_000_000),
+        // 10,000 NOCK in nicks (1 NOCK = 2^16 nicks). Must exceed the domain
+        // gift (5,000 NOCK for a 4-char name like "good.nock") plus the
+        // ~100 NOCK fee buffer enforced by `useRegistrationFlow`.
+        assets: BigInt(10_000) * BigInt(65536),
       }),
     },
     TxBuilder,
