@@ -111,7 +111,7 @@ export default function DomainCard({
                 Registering...
               </>
             ) : (
-              "Register Domain"
+              "Register Nock Name"
             )}
           </Button>
         ) : isPending && domain.owner ? (

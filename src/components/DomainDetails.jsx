@@ -225,7 +225,7 @@ export default function DomainDetails({
               disabled={!canRegister || isRegistering || isRegisterDisabled}
               data-testid={`button-register-${domain.name}`}
             >
-              Register Domain
+              Register Nock Name
             </Button>
           )}
         </div>

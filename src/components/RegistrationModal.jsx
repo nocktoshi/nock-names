@@ -124,7 +124,6 @@ export default function RegistrationModal({
               </Badge>
             )}
           </DialogTitle>
-          <DialogDescription>Register this .nock name</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
