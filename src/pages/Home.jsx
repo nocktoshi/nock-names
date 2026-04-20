@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Zap, Search, Wallet, ArrowLeftRight, FileText } from "lucide-react";
+import { Zap, Search, Wallet, ArrowLeftRight, FileText, Code2 } from "lucide-react";
 import { Link } from "wouter";
 import DomainSearch from "@/components/DomainSearch";
 import DomainCard from "@/components/DomainCard";
@@ -117,6 +117,12 @@ export default function Home() {
                 <Button variant="outline" className="gap-2">
                   <FileText className="h-4 w-4" />
                   NNS Grant
+                </Button>
+              </Link>
+              <Link href="/developers">
+                <Button variant="outline" className="gap-2">
+                  <Code2 className="h-4 w-4" />
+                  API Docs
                 </Button>
               </Link>
 
