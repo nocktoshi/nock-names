@@ -102,7 +102,7 @@ export default function RegistrationModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         data-testid="modal-registration"
-        className="sm:max-w-md glassmorphism web3-glow"
+        className="sm:max-w-md web3-glow bg-background"
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
