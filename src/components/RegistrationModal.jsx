@@ -106,7 +106,7 @@ export default function RegistrationModal({
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span>Register Domain</span>
+            <span>Register Nock Name</span>
             {status === "available" ? (
               <Badge variant="default" className="bg-chart-2">
                 Available
