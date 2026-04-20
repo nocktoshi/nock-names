@@ -116,12 +116,12 @@ export default function Home() {
                   Lookup
                 </Button>
               </Link>
-              <Link href="/upgrade">
+              {/* <Link href="/upgrade">
                 <Button variant="outline" className="gap-2">
                   <ArrowLeftRight className="h-4 w-4" />
                   Upgrade v0 → v1
                 </Button>
-              </Link>
+              </Link> */}
               <Link href="/grant">
                 <Button variant="outline" className="gap-2">
                   <FileText className="h-4 w-4" />
