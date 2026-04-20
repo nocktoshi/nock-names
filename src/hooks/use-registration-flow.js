@@ -159,8 +159,37 @@ export function useRegistrationFlow({ provider, rpcClient }) {
           // Build transaction
           const notes = balance.notes.map((n) => Note.fromProtobuf(n.note));
           notes.sort((a, b) => Number(b.assets) - Number(a.assets));
-          const amount = BigInt(fee * 65536);
+          const amount = BigInt(fee * 65536); // price in nicks (1 NOCK = 2^16 nicks)
           const feePerWord = BigInt(32768); // 0.5 NOCK per word
+
+          // Rose's `simpleSpend` first applies the gift and then pulls the
+          // network fee from any remaining refund. If the wallet balance is
+          // <= the gift amount, the fee gets taken *out of the gift*, so the
+          // PAYMENT_ADDRESS would receive less than the domain price and
+          // verification would fail. Require a small buffer above the price
+          // so the network fee is paid from the user's change instead.
+          const totalAssets = notes.reduce(
+            (sum, n) => sum + BigInt(n.assets ?? 0),
+            0n
+          );
+          const feeBufferNicks = BigInt(100 * 65536); // ~100 NOCK buffer for network fee
+          if (totalAssets <= amount) {
+            setStatus(STATUSES.failed);
+            setStatusText(
+              `Insufficient balance: the full ${fee} NOCK domain fee must be received by NockNames. ` +
+                `Your wallet holds ${Number(totalAssets) / 65536} NOCK — you need more than ${fee} NOCK ` +
+                `(at least ~${fee + 1} NOCK) to cover the network fee on top of the domain price.`
+            );
+            return { ok: false };
+          }
+          if (totalAssets < amount + feeBufferNicks) {
+            // Not blocking, just a proactive warning — rose-rs may still build
+            // a valid tx with a small refund covering the network fee.
+            console.warn(
+              `[nock-names] wallet balance (${Number(totalAssets) / 65536} NOCK) is close to the domain fee ` +
+                `(${fee} NOCK). If the network fee exceeds the remaining change, the signed payment may be short.`
+            );
+          }
           const builder = new TxBuilder(feePerWord);
           const recipientDigest = new Digest(PAYMENT_ADDRESS);
           const refundDigest = new Digest(address);
