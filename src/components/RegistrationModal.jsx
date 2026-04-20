@@ -82,14 +82,14 @@ export default function RegistrationModal({
     const Icon = config.icon;
 
     return (
-      <div className="flex items-center gap-3 p-4 rounded-lg bg-muted">
-        <div className={`p-2 rounded-full ${config.color}`}>
+      <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
+        <div className={`p-2 rounded-full shrink-0 ${config.color}`}>
           <Icon className="h-4 w-4 text-white" />
         </div>
-        <div className="flex-1">
-          <p className="font-medium">{config.text}</p>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium break-words">{config.text}</p>
           {transactionHash && (
-            <p className="text-sm text-muted-foreground font-mono">
+            <p className="text-sm text-muted-foreground font-mono break-all">
               {transactionHash.slice(0, 6)}...{transactionHash.slice(-4)}
             </p>
           )}

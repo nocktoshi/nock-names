@@ -240,9 +240,7 @@ export function useRegistrationFlow({ provider, rpcClient }) {
 
           setTransactionHash(nockchainTx.id.value);
           setStatus(STATUSES.pending);
-          setStatusText(
-            `Transaction sent! Waiting for confirmation... TX: ${nockchainTx.id.value}`
-          );
+          setStatusText("Transaction sent! Waiting for confirmation…");
 
           return { ok: true, hash: nockchainTx.id.value, result };
         }
