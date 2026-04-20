@@ -32,7 +32,7 @@ export default function DomainCard({
           className="bg-yellow-500 text-black border-transparent no-default-hover-elevate"
         >
           <Clock className="h-3 w-3 mr-1" />
-          Pending
+          Payment Pending
         </Badge>
       );
     }

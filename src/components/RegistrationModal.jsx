@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import WalletConnection from "./WalletConnection";
+import PendingPaymentAlert from "./PendingPaymentAlert";
 
 export default function RegistrationModal({
   domain,
@@ -41,7 +42,8 @@ export default function RegistrationModal({
 
   const status =
     domain.status ?? (domain.isAvailable ? "available" : "registered");
-  const pendingOwner = status === "pending" ? domain.owner : null;
+  const isPending = status === "pending";
+  const pendingOwner = isPending ? domain.owner : null;
   const showWalletConnect = !account;
 
   const isConfirmDisabled =
@@ -114,7 +116,7 @@ export default function RegistrationModal({
                 variant="secondary"
                 className="bg-yellow-500 text-black border-transparent no-default-hover-elevate"
               >
-                Pending
+                Payment Pending
               </Badge>
             ) : (
               <Badge variant="destructive">Registered</Badge>
@@ -163,6 +165,14 @@ export default function RegistrationModal({
                 </div>
               )}
             </div>
+
+            {/* Payment instructions (pending) */}
+            {isPending && (
+              <PendingPaymentAlert
+                price={domain.price}
+                createdAt={domain.registeredAt ?? domain.timestamp}
+              />
+            )}
 
             {/* Transaction Status */}
             {getStatusDisplay()}

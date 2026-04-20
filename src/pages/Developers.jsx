@@ -250,7 +250,7 @@ const endpoints = [
     method: "POST",
     path: "/register",
     description:
-      "Create a pending registration reserving a name for an address. The client must then send payment on-chain and call /verify.",
+      "Create a payment-pending registration reserving a name for an address. The client has 7 days to send the fee on-chain to the NockNames payment address and call /verify — otherwise the reservation is released and the name becomes available again.",
     body: [
       {
         name: "address",

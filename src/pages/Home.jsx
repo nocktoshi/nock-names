@@ -7,10 +7,15 @@ import DomainSuggestions from "@/components/DomainSuggestions";
 import RecentlyRegistered from "@/components/RecentlyRegistered";
 import WalletConnection from "@/components/WalletConnection";
 import RegistrationModal from "@/components/RegistrationModal";
+import PendingPaymentAlert from "@/components/PendingPaymentAlert";
 import PricingCard from "@/components/PricingCard";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useRegistrationFlow } from "@/hooks/use-registration-flow";
-import { useDomainSearch, useSuggestions } from "@/hooks/use-queries";
+import {
+  useDomainSearch,
+  useSuggestions,
+  useAddressPortfolioQuery,
+} from "@/hooks/use-queries";
 import { useWallet } from "@/hooks/use-wallet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -43,6 +48,10 @@ export default function Home() {
   const suggestionsQuery = useSuggestions(
     searchTerm,
     Boolean(searchQuery.data && searchQuery.data.status !== "available")
+  );
+  const portfolioQuery = useAddressPortfolioQuery(connectedAccount);
+  const pendingDomains = (portfolioQuery.data ?? []).filter(
+    (d) => d.status === "pending"
   );
 
   const searchResults = searchQuery.data ? [searchQuery.data] : [];
@@ -143,6 +152,30 @@ export default function Home() {
           </div>
         </div>
       </header>
+
+      {/* Pending Payment Alerts (connected wallet) */}
+      {pendingDomains.length > 0 && (
+        <section className="px-4 pb-4">
+          <div className="container mx-auto max-w-3xl space-y-3">
+            <div className="text-sm font-medium text-foreground">
+              {pendingDomains.length === 1
+                ? "You have a nock name awaiting payment!"
+                : `You have ${pendingDomains.length} names awaiting payment`}
+            </div>
+            {pendingDomains.map((domain) => (
+              <PendingPaymentAlert
+                key={domain.id ?? domain.name}
+                name={domain.name}
+                price={domain.price}
+                createdAt={domain.registeredAt ?? domain.timestamp}
+                onComplete={() => handleRegister(domain)}
+                isProcessing={isRegistering}
+                isDisabled={!isRoseReady}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Hero Section */}
       <section className="py-16 px-4">

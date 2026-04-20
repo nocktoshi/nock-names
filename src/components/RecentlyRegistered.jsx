@@ -71,7 +71,7 @@ export default function RecentlyRegistered({
                       variant="secondary"
                       className="text-xs bg-yellow-500 text-black border-transparent no-default-hover-elevate"
                     >
-                      Pending
+                      Payment Pending
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="text-xs">

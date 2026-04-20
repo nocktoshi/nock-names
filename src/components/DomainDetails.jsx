@@ -17,6 +17,7 @@ export default function DomainDetails({
   const statusBadgeClassName = isPending
     ? "bg-yellow-500 text-black border-transparent no-default-hover-elevate"
     : undefined;
+  const statusLabel = isPending ? "Payment Pending" : status;
 
   const formatDate = (date) => {
     if (!date) return "N/A";
@@ -54,7 +55,7 @@ export default function DomainDetails({
             variant={isAvailable ? "default" : "secondary"}
             className={["text-sm", statusBadgeClassName].filter(Boolean).join(" ")}
           >
-            {status}
+            {statusLabel}
           </Badge>
         </div>
       </CardHeader>
@@ -76,7 +77,7 @@ export default function DomainDetails({
                   variant={isAvailable ? "outline" : "default"}
                   className={statusBadgeClassName}
                 >
-                  {status}
+                  {statusLabel}
                 </Badge>
               </div>
               <div className="flex justify-between">
