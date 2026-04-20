@@ -3,9 +3,9 @@ import { AlertTriangle, Clock, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PAYMENT_ADDRESS } from "@/common";
 
-export const PAYMENT_DEADLINE_DAYS = 7;
+const PAYMENT_DEADLINE_DAYS = 7;
 
-export function formatDaysLeft(timestamp) {
+function formatDaysLeft(timestamp) {
   if (!timestamp) return null;
   const created = new Date(timestamp).getTime();
   if (!Number.isFinite(created)) return null;
