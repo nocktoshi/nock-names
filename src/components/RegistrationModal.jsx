@@ -137,7 +137,7 @@ export default function RegistrationModal({
             {!isPending && (
               <div className="space-y-3 p-4 rounded-lg bg-muted">
                 <div className="flex justify-between">
-                  <span className="text-sm">Domain price</span>
+                  <span className="text-sm">Price</span>
                   <span className="font-mono">{domain.price} NOCK</span>
                 </div>
                 <Separator />
