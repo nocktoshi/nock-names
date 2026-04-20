@@ -129,52 +129,50 @@ export default function RegistrationModal({
 
         <div className="space-y-6">
           {/* Domain Info */}
-          {!isPending && (
-            <>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-mono font-semibold">
-                    {domain.name}
-                  </span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-mono font-semibold">
+                {domain.name}
+              </span>
+            </div>
+            {!isPending && (
+              <div className="space-y-3 p-4 rounded-lg bg-muted">
+                <div className="flex justify-between">
+                  <span className="text-sm">Domain price</span>
+                  <span className="font-mono">{domain.price} NOCK</span>
                 </div>
-
-                <div className="space-y-3 p-4 rounded-lg bg-muted">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Domain price</span>
-                    <span className="font-mono">{domain.price} NOCK</span>
+                <Separator />
+                <label className="text-sm">Address:</label>
+                {status === "pending" && pendingOwner ? (
+                  <div className="text-xs text-muted-foreground">
+                    Pending address:{" "}
+                    <span className="font-mono">
+                      {pendingOwner.slice(0, 6)}...{pendingOwner.slice(-4)}
+                    </span>
                   </div>
-                  <Separator />
-                  <label className="text-sm">Address:</label>
-                  {status === "pending" && pendingOwner ? (
-                    <div className="text-xs text-muted-foreground">
-                      Pending address:{" "}
-                      <span className="font-mono">
-                        {pendingOwner.slice(0, 6)}...{pendingOwner.slice(-4)}
-                      </span>
-                    </div>
-                  ) : null}
-                  {status === "pending" && showWalletConnect ? (
-                    <p className="text-xs text-muted-foreground">
-                      Connect your wallet to complete payment.
-                    </p>
-                  ) : showWalletConnect ? (
-                    <WalletConnection
-                      provider={provider}
-                      onAccountChange={onAccountChange}
-                    />
-                  ) : (
-                    <div className="font-mono text-sm bg-background px-3 py-2 rounded border">
-                      {account.slice(0, 6)}...{account.slice(-4)}
-                    </div>
-                  )}
-                </div>
+                ) : null}
+                {status === "pending" && showWalletConnect ? (
+                  <p className="text-xs text-muted-foreground">
+                    Connect your wallet to complete payment.
+                  </p>
+                ) : showWalletConnect ? (
+                  <WalletConnection
+                    provider={provider}
+                    onAccountChange={onAccountChange}
+                  />
+                ) : (
+                  <div className="font-mono text-sm bg-background px-3 py-2 rounded border">
+                    {account.slice(0, 6)}...{account.slice(-4)}
+                  </div>
+                )}
               </div>
-            </>
-          )}
+            )}
+          </div>
           {/* Payment instructions (pending) */}
           {isPending && (
             <PendingPaymentAlert
               price={domain.price}
+              name={domain.name}
               createdAt={domain.registeredAt ?? domain.timestamp}
             />
           )}
