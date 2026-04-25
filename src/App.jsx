@@ -9,6 +9,26 @@ import NotFound from "@/pages/not-found";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+function MigrationBanner() {
+  return (
+    <div className="w-full bg-[#D4F96A] px-4 py-3 text-center text-sm text-black">
+      <p className="mx-auto max-w-5xl">
+        Nocknames is evolving into the NNS protocol! We are excited to welcome you to
+        our new home at{" "}
+        <a
+          href="https://nns.id"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-bold underline decoration-black/70 underline-offset-2 hover:decoration-black"
+        >
+          nns.id
+        </a>
+        .
+      </p>
+    </div>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -29,6 +49,7 @@ function App() {
   return (
     <TooltipProvider>
       <Toaster />
+      <MigrationBanner />
       <Router />
     </TooltipProvider>
   );
